@@ -2,232 +2,343 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TIGR CRM - Professional</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <title>TIGR CRM | Cloud Metro Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body, html { margin: 0; padding: 0; background-color: #1e1e1e; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow-x: hidden; }
+        .dashboard-container { padding: 30px 40px; }
+        .header { display: flex; align-items: center; margin-bottom: 20px; }
+        .header h1 { font-weight: 300; font-size: 2.2rem; margin: 0; letter-spacing: 1px; color: #0078d7; }
+        .content-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .panel { background-color: #2d2d30; padding: 20px; display: flex; flex-direction: column; min-height: 380px; }
+        .panel-title { font-size: 1.1rem; color: #ccc; margin-top: 0; margin-bottom: 20px; font-weight: 400; border-bottom: 1px solid #3e3e42; padding-bottom: 10px; }
+
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { color: #888; font-weight: normal; font-size: 0.8rem; padding: 8px 5px; border-bottom: 2px solid #3e3e42; text-align: center; }
+        th:first-child, th:nth-child(2) { text-align: left; }
+        td { padding: 8px 5px; border-bottom: 1px solid #3e3e42; font-size: 0.95rem; text-align: center; vertical-align: middle; }
+        td:first-child, td:nth-child(2) { text-align: left; }
+        
+        .user-id { color: #0078d7; font-family: monospace; font-size: 0.9rem; }
+        .cell-input { width: 45px; padding: 5px; background: #1e1e1e; border: 1px solid #3e3e42; color: white; text-align: center; border-radius: 2px; }
+        .cell-input:focus { border-color: #0078d7; outline: none; }
+        .cell-input:disabled { background: #2a2a2a; color: #888; border-color: #2a2a2a; cursor: not-allowed; }
+        .cell-total { font-weight: bold; color: #107c10; }
+        
+        .btn-delete { background-color: #d13438; color: white; border: none; padding: 4px 8px; cursor: pointer; border-radius: 2px; font-size: 0.8rem; }
+        .btn-delete:hover { background-color: #a80000; }
+
+        .chart-container { position: relative; width: 100%; height: 210px; display: flex; justify-content: center; align-items: flex-end; }
+        .custom-legend { display: flex; justify-content: center; flex-wrap: nowrap; gap: 12px; margin-top: 25px; font-size: 0.85rem; border-top: 1px solid #3e3e42; padding-top: 15px; }
+        .legend-item { display: flex; align-items: center; gap: 6px; white-space: nowrap; color: #aaa; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+        .legend-value { color: #ffffff; font-weight: bold; }
+
+        .admin-toggle-btn { width: 100%; padding: 15px; background: #252526; color: #888; border: 1px dashed #444; cursor: pointer; text-align: center; transition: 0.3s; font-size: 1rem; }
+        .admin-toggle-btn:hover { background: #333; color: #fff; border-color: #0078d7; }
+
+        .admin-panel { background-color: #2d2d30; padding: 20px; border-left: 5px solid #d13438; display: flex; flex-wrap: wrap; gap: 20px; margin-top: 20px; }
+        .admin-section { flex: 1; min-width: 250px; }
+        .admin-section h3 { margin-top: 0; font-weight: 400; color: #ccc; font-size: 1.1rem; border-bottom: 1px solid #3e3e42; padding-bottom: 10px; }
+        
+        .input-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .input-group label { font-size: 0.9rem; color: #aaa; }
+        .input-group input { width: 100px; padding: 8px; background: #1e1e1e; border: 1px solid #3e3e42; color: white; text-align: right; }
+        
+        .btn-metro { background-color: #0078d7; color: white; border: none; padding: 10px 15px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; transition: 0.2s; }
+        .btn-metro:hover { background-color: #005a9e; }
+        .btn-add { background-color: #107c10; }
+        .btn-add:hover { background-color: #0b580b; }
+
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); justify-content: center; align-items: center; }
+        .modal-content { background: #2d2d30; padding: 30px; width: 300px; border-top: 4px solid #0078d7; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .modal-content input { width: 100%; padding: 10px; margin: 15px 0; background: #1e1e1e; border: 1px solid #3e3e42; color: white; box-sizing: border-box; text-align: center; font-size: 1.2rem; letter-spacing: 5px; }
+        
+        .hidden { display: none !important; }
+        .loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: #1e1e1e; display:flex; justify-content:center; align-items:center; z-index:9999; font-size:1.5rem; font-weight:300; }
+    </style>
 </head>
-<body class="sidebar-open">
+<body>
 
-    <header class="main-header">
-        <div class="logo">
-            <span class="logo-mini"><b>T</b>CRM</span>
-            <span class="logo-lg"><b>TIGR</b> CRM</span>
+    <div id="loading" class="loading-overlay">Всё легло к херам собачьим, Бодя, Чини!</div>
+
+    <div class="dashboard-container">
+        <div class="header"><h1>World Wide CRM</h1></div>
+
+        <div class="content-grid">
+            <div class="panel">
+                <h3 class="panel-title">Реестр сотрудников и данные</h3>
+                <table>
+                    <thead>
+                        <tr id="tableHeader">
+                            <th>Номер</th><th>Имя</th><th>ПН</th><th>ВТ</th><th>СР</th><th>ЧТ</th><th>ПТ</th><th>СБ</th><th>Общ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employeeTableBody"></tbody>
+                </table>
+            </div>
+
+            <div class="panel">
+                <h3 class="panel-title">Распределение данных</h3>
+                <div class="chart-container"><canvas id="gaugeChart"></canvas></div>
+                <div id="gaugeLegend" class="custom-legend"></div>
+            </div>
+
+            <div class="panel">
+                <h3 class="panel-title">Лидеры по данным</h3>
+                <div class="chart-container" style="height: 270px;"><canvas id="barChart"></canvas></div>
+            </div>
         </div>
-        <nav class="navbar">
-            <a href="#" class="sidebar-toggle" onclick="toggleSidebar()">
-                <i class="fas fa-bars"></i>
-            </a>
-            <div class="navbar-custom-menu">
-                <div class="search-box">
-                    <input type="text" placeholder="Search...">
-                    <i class="fas fa-search"></i>
-                </div>
-                <ul class="nav-menu">
-                    <li><a href="#"><i class="fas fa-envelope"></i><span class="badge bg-green">4</span></a></li>
-                    <li><a href="#"><i class="fas fa-bell"></i><span class="badge bg-yellow">10</span></a></li>
-                    <li><a href="#"><i class="fas fa-flag"></i><span class="badge bg-red">9</span></a></li>
-                    <li class="user-menu">
-                        <img src="https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff" alt="User Image">
-                        <span>Admin</span>
-                    </li>
-                </ul>
-            </div>
-        </nav>
-    </header>
 
-    <aside class="main-sidebar">
-        <section class="sidebar">
-            <div class="user-panel">
-                <div class="pull-left image">
-                    <img src="https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff" class="img-circle" alt="User Image">
-                </div>
-                <div class="pull-left info">
-                    <p>Admin User</p>
-                    <a href="#"><i class="fas fa-circle text-success"></i> Online</a>
-                </div>
-            </div>
-            <ul class="sidebar-menu">
-                <li class="header">MAIN NAVIGATION</li>
-                <li class="active"><a href="#"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
-                <li><a href="#"><i class="fas fa-th"></i> <span>Widgets</span></a></li>
-                <li><a href="#"><i class="fas fa-table"></i> <span>Таблицы данных</span></a></li>
-                <li><a href="#"><i class="fas fa-chart-pie"></i> <span>Статистика</span></a></li>
-                <li><a href="#"><i class="fas fa-cogs"></i> <span>Настройки</span></a></li>
-            </ul>
-        </section>
-    </aside>
+        <div id="adminModeBtn" class="admin-toggle-btn" onclick="openPinModal()">[ Включить Admin-Mode ]</div>
 
-    <div class="content-wrapper">
-        <section class="content-header">
-            <h1>Dashboard <small>Version 1.0</small></h1>
-            <button class="btn btn-primary" style="margin-top: 15px;" onclick="addNewRow()">
-                <i class="fas fa-user-plus"></i> Добавить сотрудника
-            </button>
-        </section>
-
-        <section class="content">
-            <div class="row row-tiles">
-                <div class="tile bg-blue">
-                    <div class="inner">
-                        <h3 id="totalUsers">0</h3>
-                        <p>Всего сотрудников</p>
-                    </div>
-                    <div class="icon"><i class="fas fa-users"></i></div>
+        <div id="adminPanel" class="admin-panel hidden">
+            <div class="admin-section">
+                <h3>Глобальные данные</h3>
+                <div class="input-group">
+                    <label>Общее количество:</label>
+                    <input type="number" id="globalTotal" onchange="uploadGlobalMetrics()">
                 </div>
-                <div class="tile bg-green">
-                    <div class="inner">
-                        <h3 id="totalData">0</h3>
-                        <p>Сумма данных</p>
-                    </div>
-                    <div class="icon"><i class="fas fa-chart-bar"></i></div>
+                <div class="input-group">
+                    <label>Жёлтые Воды:</label>
+                    <input type="number" id="globalZV" onchange="uploadGlobalMetrics()">
                 </div>
-                <div class="tile bg-yellow">
-                    <div class="inner">
-                        <h3>90<sup style="font-size: 20px">%</sup></h3>
-                        <p>Эффективность</p>
-                    </div>
-                    <div class="icon"><i class="fas fa-tachometer-alt"></i></div>
+                <div class="input-group">
+                    <label>Никополь:</label>
+                    <input type="number" id="globalNikopol" onchange="uploadGlobalMetrics()">
                 </div>
-                <div class="tile bg-red">
-                    <div class="inner">
-                        <h3>0</h3>
-                        <p>Ошибки / Пропуски</p>
-                    </div>
-                    <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="input-group" style="background: rgba(255,255,255,0.05); padding: 5px;">
+                    <label style="color: #fff; font-weight: bold;">Каменка (Авто):</label>
+                    <span id="globalKamenka" style="font-weight: bold; color: #f39c12;">0</span>
                 </div>
             </div>
 
-            <div class="box">
-                <div class="box-header">
-                    <h3 class="box-title"><i class="fas fa-list"></i> Показатели локальных коллег</h3>
-                </div>
-                <div class="box-body table-responsive">
-                    <table class="table table-hover" id="employeeTable">
-                        <thead>
-                            <tr>
-                                <th style="width: 15%;">ID (Номер)</th>
-                                <th style="width: 35%;">Имя сотрудника</th>
-                                <th style="width: 25%;">Кол-во данных</th>
-                                <th style="width: 25%; text-align: right;">Действия</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody">
-                            </tbody>
-                    </table>
-                </div>
+            <div class="admin-section">
+                <h3>Управление сотрудниками</h3>
+                <div class="input-group"><label>ID (NK_User#):</label><input type="text" id="newEmpId" placeholder="007"></div>
+                <div class="input-group"><label>Имя:</label><input type="text" id="newEmpName" placeholder="Иван И."></div>
+                <button class="btn-metro btn-add" onclick="addEmployee()">+ ДОБАВИТЬ СОТРУДНИКА</button>
             </div>
-        </section>
+        </div>
+    </div>
+
+    <div id="pinModal" class="modal">
+        <div class="modal-content">
+            <h3>Вход в Admin-Mode</h3>
+            <input type="password" id="adminPin" placeholder="****" maxlength="4">
+            <button class="btn-metro" onclick="checkPin()">ПОДТВЕРДИТЬ</button>
+            <button class="btn-metro" style="background: #444; margin-top: 5px;" onclick="closePinModal()">ОТМЕНА</button>
+        </div>
     </div>
 
     <script>
-        // Управление боковым меню
-        function toggleSidebar() {
-            document.body.classList.toggle('sidebar-collapse');
+        // === НАСТРОЙКА ПОДКЛЮЧЕНИЯ SUPABASE ===
+        const SUPABASE_URL = "https://geolvowpvdxnimypcvfx.supabase.co"; 
+        const SUPABASE_ANON_KEY = "sb_publishable_NYYvXFGX8ZnVK0CyEFPehg_z58eWBut";
+
+        // Инициализируем клиент базы данных в переменную db, чтобы не ломать библиотеку
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let isAdmin = false;
+        let employees = [];
+        let gaugeChartInst = null;
+        let barChartInst = null;
+        const dbDaysKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+
+        Chart.defaults.color = '#aaaaaa';
+        Chart.defaults.font.family = "'Segoe UI', sans-serif";
+
+        // Загрузка данных из облака
+        async function loadCloudData() {
+            if(!db) {
+                document.getElementById('loading').innerText = "Конфигурация Supabase не задана. Вставьте ключи в код.";
+                return;
+            }
+            
+            // 1. Получаем глобальные метрики
+            let { data: metrics } = await db.from('global_metrics').select('*').eq('id', 1).single();
+            if (metrics) {
+                document.getElementById('globalTotal').value = metrics.total;
+                document.getElementById('globalZV').value = metrics.zv;
+                document.getElementById('globalNikopol').value = metrics.nikopol;
+            }
+
+            // 2. Получаем сотрудников
+            let { data: dbEmployees } = await db.from('employees').select('*').order('created_at', { ascending: true });
+            if (dbEmployees) {
+                employees = dbEmployees.map(emp => ({
+                    id: emp.id,
+                    name: emp.name,
+                    days: [emp.mon, emp.tue, emp.wed, emp.thu, emp.fri, emp.sat]
+                }));
+            }
+
+            document.getElementById('loading').style.display = 'none';
+            calculateKamenka(false); 
+            renderTable();
         }
 
-        // Взаимодействие с API базы данных (Python FastAPI)
-        const apiUrl = "http://127.0.0.1:8000/api/users";
+        // Отправка измененных глобальных данных в облако
+        async function uploadGlobalMetrics() {
+            const total = parseInt(document.getElementById('globalTotal').value) || 0;
+            const zv = parseInt(document.getElementById('globalZV').value) || 0;
+            const nikopol = parseInt(document.getElementById('globalNikopol').value) || 0;
 
-        async function loadData() {
-            try {
-                const response = await fetch(apiUrl);
-                const users = await response.json();
-                const tbody = document.getElementById('tableBody');
-                tbody.innerHTML = ''; 
-                
-                let totalDataCount = 0;
+            calculateKamenka(true);
 
-                users.forEach(user => {
-                    totalDataCount += user.data_count;
-                    tbody.innerHTML += createRowHtml(user.id, user.name, user.data_count);
-                });
-
-                // Обновляем статистику в плитках
-                document.getElementById('totalUsers').innerText = users.length;
-                document.getElementById('totalData').innerText = totalDataCount;
-
-            } catch (error) {
-                console.error("Ошибка API: Запущен ли сервер на Python (uvicorn)?", error);
+            if(db) {
+                await db.from('global_metrics').update({ total, zv, nikopol }).eq('id', 1);
             }
         }
 
-        function createRowHtml(id, name, count) {
-            return `
-                <tr>
-                    <td>
-                        <div class="input-group">
-                            <span class="input-group-addon"><i class="fas fa-hashtag"></i></span>
-                            <input type="text" class="form-control id-field" value="${id}" ${id.includes('НК') ? 'readonly' : ''}>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="input-group">
-                            <span class="input-group-addon"><i class="fas fa-user"></i></span>
-                            <input type="text" class="form-control name-field" value="${name}">
-                        </div>
-                    </td>
-                    <td>
-                        <div class="spinner-control">
-                            <button class="btn btn-default btn-sm" onclick="changeVal(this, -1)"><i class="fas fa-minus"></i></button>
-                            <input type="number" class="form-control text-center count-field" value="${count}">
-                            <button class="btn btn-default btn-sm" onclick="changeVal(this, 1)"><i class="fas fa-plus"></i></button>
-                        </div>
-                    </td>
-                    <td class="text-right">
-                        <button class="btn btn-success btn-sm" onclick="saveRow(this)"><i class="fas fa-save"></i> Сохранить</button>
-                    </td>
-                </tr>
-            `;
+        function calculateKamenka(shouldUpdateCharts = true) {
+            const total = parseInt(document.getElementById('globalTotal').value) || 0;
+            const zv = parseInt(document.getElementById('globalZV').value) || 0;
+            const nikopol = parseInt(document.getElementById('globalNikopol').value) || 0;
+            
+            let kamenka = total - (nikopol + zv);
+            if (kamenka < 0) kamenka = 0;
+            document.getElementById('globalKamenka').innerText = kamenka;
+
+            if(shouldUpdateCharts && gaugeChartInst) {
+                gaugeChartInst.data.datasets[0].data = [total, zv, kamenka, nikopol];
+                gaugeChartInst.update();
+                updateCustomLegend(total, zv, kamenka, nikopol);
+            }
         }
 
-        function changeVal(btn, step) {
-            const input = btn.parentElement.querySelector('.count-field');
-            let currentVal = parseInt(input.value) || 0;
-            input.value = Math.max(0, currentVal + step);
-        }
+        function renderTable() {
+            const tbody = document.getElementById('employeeTableBody');
+            tbody.innerHTML = '';
 
-        function addNewRow() {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML += createRowHtml("НОВЫЙ_ID", "Имя сотрудника", 0);
-        }
+            employees.forEach((emp, index) => {
+                let totalMonFri = emp.days.slice(0, 5).reduce((a, b) => a + b, 0);
+                let disabledAttr = isAdmin ? '' : 'disabled';
 
-        async function saveRow(btn) {
-            const row = btn.closest('tr');
-            const id = row.querySelector('.id-field').value;
-            const name = row.querySelector('.name-field').value;
-            const count = parseInt(row.querySelector('.count-field').value);
-            const originalIcon = btn.innerHTML;
+                let tr = document.createElement('tr');
+                let html = `
+                    <td class="user-id">${emp.id}</td>
+                    <td>${emp.name}</td>
+                    ${emp.days.map((val, dayIdx) => `
+                        <td><input type="number" class="cell-input" value="${val}" onchange="updateEmpDayInCloud(${index}, ${dayIdx}, this.value)" ${disabledAttr}></td>
+                    `).join('')}
+                    <td class="cell-total" id="total_${index}">${totalMonFri}</td>
+                `;
 
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Сохранение...';
-            btn.classList.add('disabled');
-
-            try {
-                const response = await fetch(apiUrl + "/update", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ id: id, name: name, data_count: count })
-                });
-
-                if (response.ok) {
-                    btn.innerHTML = '<i class="fas fa-check"></i> Готово';
-                    btn.classList.replace('btn-success', 'btn-primary');
-                    setTimeout(() => { 
-                        btn.innerHTML = '<i class="fas fa-save"></i> Сохранить'; 
-                        btn.classList.replace('btn-primary', 'btn-success');
-                        btn.classList.remove('disabled');
-                        loadData(); // Пересчитываем статистику
-                    }, 1500);
+                if (isAdmin) {
+                    html += `<td><button class="btn-delete" onclick="deleteEmployee('${emp.id}', ${index})">✕</button></td>`;
                 }
-            } catch (error) {
-                alert("Ошибка сохранения! Проверьте подключение к серверу.");
-                btn.innerHTML = originalIcon;
-                btn.classList.remove('disabled');
+                tr.innerHTML = html;
+                tbody.appendChild(tr);
+            });
+            updateLeaderboard();
+        }
+
+        // Обновление конкретного дня сотрудника в облаке
+        async function updateEmpDayInCloud(empIndex, dayIndex, value) {
+            const intVal = parseInt(value) || 0;
+            employees[empIndex].days[dayIndex] = intVal;
+            
+            let newTotal = employees[empIndex].days.slice(0, 5).reduce((a, b) => a + b, 0);
+            document.getElementById(`total_${empIndex}`).innerText = newTotal;
+            updateLeaderboard();
+
+            if(db) {
+                const columnName = dbDaysKeys[dayIndex];
+                await db.from('employees').update({ [columnName]: intVal }).eq('id', employees[empIndex].id);
             }
         }
 
-        window.onload = loadData;
+        // Добавление сотрудника в облако
+        async function addEmployee() {
+            const idVal = document.getElementById('newEmpId').value;
+            const nameVal = document.getElementById('newEmpName').value;
+            if(!idVal || !nameVal) return alert('Введите ID и Имя!');
+
+            const fullId = `NK_User#${idVal}`;
+
+            if(db) {
+                await db.from('employees').insert([{ id: fullId, name: nameVal }]);
+            }
+
+            employees.push({ id: fullId, name: nameVal, days: [0, 0, 0, 0, 0, 0] });
+            document.getElementById('newEmpId').value = '';
+            document.getElementById('newEmpName').value = '';
+            renderTable();
+        }
+
+        // Удаление сотрудника из облака
+        async function deleteEmployee(id, index) {
+            if(confirm(`Удалить сотрудника ${employees[index].name}?`)) {
+                if(db) {
+                    await db.from('employees').delete().eq('id', id);
+                }
+                employees.splice(index, 1);
+                renderTable();
+            }
+        }
+
+        // Остальные системные функции графиков и PIN-кода
+        function initCharts() {
+            const ctxGauge = document.getElementById('gaugeChart').getContext('2d');
+            gaugeChartInst = new Chart(ctxGauge, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Общие', 'Жёлтые Воды', 'Каменка', 'Никополь'],
+                    datasets: [{ data: [0, 0, 0, 0], backgroundColor: ['#444444', '#f1c40f', '#e67e22', '#3498db'], borderWidth: 0 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, rotation: -90, circumference: 180, plugins: { legend: { display: false } } }
+            });
+
+            const ctxBar = document.getElementById('barChart').getContext('2d');
+            barChartInst = new Chart(ctxBar, {
+                type: 'bar',
+                data: { labels: [], datasets: [{ label: 'Объем данных', data: [], backgroundColor: '#107c10' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#3e3e42' } }, x: { grid: { display: false } } } }
+            });
+        }
+
+        function updateCustomLegend(total, zv, kamenka, nikopol) {
+            const legendZone = document.getElementById('gaugeLegend');
+            const scheme = [
+                { text: 'Общие', val: total, color: '#444444' },
+                { text: 'Жёлтые Воды', val: zv, color: '#f1c40f' },
+                { text: 'Каменка', val: kamenka, color: '#e67e22' },
+                { text: 'Никополь', val: nikopol, color: '#3498db' }
+            ];
+            legendZone.innerHTML = scheme.map(item => `
+                <div class="legend-item">
+                    <span class="legend-color" style="background-color: ${item.color}"></span>
+                    <span>${item.text}: <span class="legend-value">${item.val}</span></span>
+                </div>
+            `).join('');
+        }
+
+        function updateLeaderboard() {
+            if(!barChartInst) return;
+            barChartInst.data.labels = employees.map(e => e.name);
+            barChartInst.data.datasets[0].data = employees.map(e => e.days.slice(0, 5).reduce((a, b) => a + b, 0));
+            barChartInst.update();
+        }
+
+        function openPinModal() { document.getElementById('pinModal').style.display = 'flex'; document.getElementById('adminPin').value = ''; document.getElementById('adminPin').focus(); }
+        function closePinModal() { document.getElementById('pinModal').style.display = 'none'; }
+        
+        function checkPin() {
+            if (document.getElementById('adminPin').value === '0402') {
+                isAdmin = true; closePinModal();
+                document.getElementById('adminModeBtn').classList.add('hidden');
+                document.getElementById('adminPanel').classList.remove('hidden');
+                if(!document.getElementById('deleteHeader')) document.getElementById('tableHeader').innerHTML += '<th id="deleteHeader">Удал.</th>';
+                renderTable();
+            } else { alert('Неверный PIN!'); }
+        }
+
+        window.onload = async () => {
+            initCharts();
+            await loadCloudData();
+        };
     </script>
 </body>
 </html>
