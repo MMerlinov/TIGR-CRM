@@ -61,7 +61,7 @@
 </head>
 <body>
 
-    <div id="loading" class="loading-overlay">Всё легло к херам собачьим, Бодя, Чини!</div>
+    <div id="loading" class="loading-overlay">Загрузка данных...</div>
 
     <div class="dashboard-container">
         <div class="header"><h1>World Wide CRM</h1></div>
@@ -137,8 +137,8 @@
         const SUPABASE_URL = "https://geolvowpvdxnimypcvfx.supabase.co"; 
         const SUPABASE_ANON_KEY = "sb_publishable_NYYvXFGX8ZnVK0CyEFPehg_z58eWBut";
 
-        // Инициализируем клиент базы данных в переменную db, чтобы не ломать библиотеку
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // Инициализируем клиент под именем db
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let isAdmin = false;
         let employees = [];
@@ -149,58 +149,38 @@
         Chart.defaults.color = '#aaaaaa';
         Chart.defaults.font.family = "'Segoe UI', sans-serif";
 
-        // Загрузка данных из облака
         async function loadCloudData() {
-            if(!db) {
-                document.getElementById('loading').innerText = "Конфигурация Supabase не задана. Вставьте ключи в код.";
-                return;
-            }
-            
-            // 1. Получаем глобальные метрики
             let { data: metrics } = await db.from('global_metrics').select('*').eq('id', 1).single();
             if (metrics) {
                 document.getElementById('globalTotal').value = metrics.total;
                 document.getElementById('globalZV').value = metrics.zv;
                 document.getElementById('globalNikopol').value = metrics.nikopol;
             }
-
-            // 2. Получаем сотрудников
             let { data: dbEmployees } = await db.from('employees').select('*').order('created_at', { ascending: true });
             if (dbEmployees) {
                 employees = dbEmployees.map(emp => ({
-                    id: emp.id,
-                    name: emp.name,
-                    days: [emp.mon, emp.tue, emp.wed, emp.thu, emp.fri, emp.sat]
+                    id: emp.id, name: emp.name, days: [emp.mon, emp.tue, emp.wed, emp.thu, emp.fri, emp.sat]
                 }));
             }
-
             document.getElementById('loading').style.display = 'none';
             calculateKamenka(false); 
             renderTable();
         }
 
-        // Отправка измененных глобальных данных в облако
         async function uploadGlobalMetrics() {
             const total = parseInt(document.getElementById('globalTotal').value) || 0;
             const zv = parseInt(document.getElementById('globalZV').value) || 0;
             const nikopol = parseInt(document.getElementById('globalNikopol').value) || 0;
-
             calculateKamenka(true);
-
-            if(db) {
-                await db.from('global_metrics').update({ total, zv, nikopol }).eq('id', 1);
-            }
+            await db.from('global_metrics').update({ total, zv, nikopol }).eq('id', 1);
         }
 
         function calculateKamenka(shouldUpdateCharts = true) {
             const total = parseInt(document.getElementById('globalTotal').value) || 0;
             const zv = parseInt(document.getElementById('globalZV').value) || 0;
             const nikopol = parseInt(document.getElementById('globalNikopol').value) || 0;
-            
-            let kamenka = total - (nikopol + zv);
-            if (kamenka < 0) kamenka = 0;
+            let kamenka = Math.max(0, total - (nikopol + zv));
             document.getElementById('globalKamenka').innerText = kamenka;
-
             if(shouldUpdateCharts && gaugeChartInst) {
                 gaugeChartInst.data.datasets[0].data = [total, zv, kamenka, nikopol];
                 gaugeChartInst.update();
@@ -211,108 +191,60 @@
         function renderTable() {
             const tbody = document.getElementById('employeeTableBody');
             tbody.innerHTML = '';
-
             employees.forEach((emp, index) => {
                 let totalMonFri = emp.days.slice(0, 5).reduce((a, b) => a + b, 0);
                 let disabledAttr = isAdmin ? '' : 'disabled';
-
                 let tr = document.createElement('tr');
-                let html = `
-                    <td class="user-id">${emp.id}</td>
-                    <td>${emp.name}</td>
-                    ${emp.days.map((val, dayIdx) => `
-                        <td><input type="number" class="cell-input" value="${val}" onchange="updateEmpDayInCloud(${index}, ${dayIdx}, this.value)" ${disabledAttr}></td>
-                    `).join('')}
-                    <td class="cell-total" id="total_${index}">${totalMonFri}</td>
-                `;
-
-                if (isAdmin) {
-                    html += `<td><button class="btn-delete" onclick="deleteEmployee('${emp.id}', ${index})">✕</button></td>`;
-                }
+                let html = `<td class="user-id">${emp.id}</td><td>${emp.name}</td>` + 
+                    emp.days.map((val, dayIdx) => `<td><input type="number" class="cell-input" value="${val}" onchange="updateEmpDayInCloud(${index}, ${dayIdx}, this.value)" ${disabledAttr}></td>`).join('') +
+                    `<td class="cell-total" id="total_${index}">${totalMonFri}</td>`;
+                if (isAdmin) html += `<td><button class="btn-delete" onclick="deleteEmployee('${emp.id}', ${index})">✕</button></td>`;
                 tr.innerHTML = html;
                 tbody.appendChild(tr);
             });
             updateLeaderboard();
         }
 
-        // Обновление конкретного дня сотрудника в облаке
         async function updateEmpDayInCloud(empIndex, dayIndex, value) {
             const intVal = parseInt(value) || 0;
             employees[empIndex].days[dayIndex] = intVal;
-            
-            let newTotal = employees[empIndex].days.slice(0, 5).reduce((a, b) => a + b, 0);
-            document.getElementById(`total_${empIndex}`).innerText = newTotal;
+            document.getElementById(`total_${empIndex}`).innerText = employees[empIndex].days.slice(0, 5).reduce((a, b) => a + b, 0);
             updateLeaderboard();
-
-            if(db) {
-                const columnName = dbDaysKeys[dayIndex];
-                await db.from('employees').update({ [columnName]: intVal }).eq('id', employees[empIndex].id);
-            }
+            await db.from('employees').update({ [dbDaysKeys[dayIndex]]: intVal }).eq('id', employees[empIndex].id);
         }
 
-        // Добавление сотрудника в облако
         async function addEmployee() {
-            const idVal = document.getElementById('newEmpId').value;
-            const nameVal = document.getElementById('newEmpName').value;
-            if(!idVal || !nameVal) return alert('Введите ID и Имя!');
-
+            const idVal = document.getElementById('newEmpId').value, nameVal = document.getElementById('newEmpName').value;
+            if(!idVal || !nameVal) return alert('Введите данные!');
             const fullId = `NK_User#${idVal}`;
-
-            if(db) {
-                await db.from('employees').insert([{ id: fullId, name: nameVal }]);
-            }
-
+            await db.from('employees').insert([{ id: fullId, name: nameVal }]);
             employees.push({ id: fullId, name: nameVal, days: [0, 0, 0, 0, 0, 0] });
-            document.getElementById('newEmpId').value = '';
-            document.getElementById('newEmpName').value = '';
             renderTable();
         }
 
-        // Удаление сотрудника из облака
         async function deleteEmployee(id, index) {
-            if(confirm(`Удалить сотрудника ${employees[index].name}?`)) {
-                if(db) {
-                    await db.from('employees').delete().eq('id', id);
-                }
+            if(confirm('Удалить?')) {
+                await db.from('employees').delete().eq('id', id);
                 employees.splice(index, 1);
                 renderTable();
             }
         }
 
-        // Остальные системные функции графиков и PIN-кода
         function initCharts() {
-            const ctxGauge = document.getElementById('gaugeChart').getContext('2d');
-            gaugeChartInst = new Chart(ctxGauge, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Общие', 'Жёлтые Воды', 'Каменка', 'Никополь'],
-                    datasets: [{ data: [0, 0, 0, 0], backgroundColor: ['#444444', '#f1c40f', '#e67e22', '#3498db'], borderWidth: 0 }]
-                },
+            gaugeChartInst = new Chart(document.getElementById('gaugeChart'), {
+                type: 'doughnut', data: { labels: ['Общие', 'ЖВ', 'Каменка', 'Никополь'], datasets: [{ data: [0,0,0,0], backgroundColor: ['#444','#f1c40f','#e67e22','#3498db'] }] },
                 options: { responsive: true, maintainAspectRatio: false, rotation: -90, circumference: 180, plugins: { legend: { display: false } } }
             });
-
-            const ctxBar = document.getElementById('barChart').getContext('2d');
-            barChartInst = new Chart(ctxBar, {
-                type: 'bar',
-                data: { labels: [], datasets: [{ label: 'Объем данных', data: [], backgroundColor: '#107c10' }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#3e3e42' } }, x: { grid: { display: false } } } }
+            barChartInst = new Chart(document.getElementById('barChart'), {
+                type: 'bar', data: { labels: [], datasets: [{ label: 'Объем', data: [], backgroundColor: '#107c10' }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
             });
         }
 
-        function updateCustomLegend(total, zv, kamenka, nikopol) {
-            const legendZone = document.getElementById('gaugeLegend');
-            const scheme = [
-                { text: 'Общие', val: total, color: '#444444' },
-                { text: 'Жёлтые Воды', val: zv, color: '#f1c40f' },
-                { text: 'Каменка', val: kamenka, color: '#e67e22' },
-                { text: 'Никополь', val: nikopol, color: '#3498db' }
-            ];
-            legendZone.innerHTML = scheme.map(item => `
-                <div class="legend-item">
-                    <span class="legend-color" style="background-color: ${item.color}"></span>
-                    <span>${item.text}: <span class="legend-value">${item.val}</span></span>
-                </div>
-            `).join('');
+        function updateCustomLegend(t, z, k, n) {
+            document.getElementById('gaugeLegend').innerHTML = [
+                {t:'Общие',v:t,c:'#444'}, {t:'ЖВ',v:z,c:'#f1c40f'}, {t:'Каменка',v:k,c:'#e67e22'}, {t:'Никополь',v:n,c:'#3498db'}
+            ].map(i => `<div class="legend-item"><span class="legend-color" style="background:${i.c}"></span>${i.t}: <b>${i.v}</b></div>`).join('');
         }
 
         function updateLeaderboard() {
@@ -322,7 +254,7 @@
             barChartInst.update();
         }
 
-        function openPinModal() { document.getElementById('pinModal').style.display = 'flex'; document.getElementById('adminPin').value = ''; document.getElementById('adminPin').focus(); }
+        function openPinModal() { document.getElementById('pinModal').style.display = 'flex'; }
         function closePinModal() { document.getElementById('pinModal').style.display = 'none'; }
         
         function checkPin() {
@@ -330,15 +262,11 @@
                 isAdmin = true; closePinModal();
                 document.getElementById('adminModeBtn').classList.add('hidden');
                 document.getElementById('adminPanel').classList.remove('hidden');
-                if(!document.getElementById('deleteHeader')) document.getElementById('tableHeader').innerHTML += '<th id="deleteHeader">Удал.</th>';
                 renderTable();
-            } else { alert('Неверный PIN!'); }
+            } else alert('Неверно!');
         }
 
-        window.onload = async () => {
-            initCharts();
-            await loadCloudData();
-        };
+        window.onload = async () => { initCharts(); await loadCloudData(); };
     </script>
 </body>
 </html>
