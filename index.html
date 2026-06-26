@@ -135,7 +135,7 @@
     <script>
         // === НАСТРОЙКА ПОДКЛЮЧЕНИЯ SUPABASE ===
         const SUPABASE_URL = "https://geolvowpvdxnimypcvfx.supabase.co"; 
-        const SUPABASE_ANON_KEY = "sb_publishable_NYYvXFGX8ZnVK0CyEFPehg_z58eWBut";
+        const SUPABASE_ANON_KEY = "sb_publishable_NYYVxFGX8ZnVK0CyEFPehg_z58eWBut";
 
         // Инициализируем клиент под именем db
         const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -214,13 +214,22 @@
         }
 
         async function addEmployee() {
-            const idVal = document.getElementById('newEmpId').value, nameVal = document.getElementById('newEmpName').value;
-            if(!idVal || !nameVal) return alert('Введите данные!');
-            const fullId = `NK_User#${idVal}`;
-            await db.from('employees').insert([{ id: fullId, name: nameVal }]);
-            employees.push({ id: fullId, name: nameVal, days: [0, 0, 0, 0, 0, 0] });
-            renderTable();
-        }
+    const idVal = document.getElementById('newEmpId').value, nameVal = document.getElementById('newEmpName').value;
+    if(!idVal || !nameVal) return alert('Введите данные!');
+    const fullId = `NK_User#${idVal}`;
+    
+    // ВАЖНО: Добавьте деструктуризацию ответа, чтобы увидеть ошибку в консоли
+    const { data, error } = await db.from('employees').insert([{ id: fullId, name: nameVal }]);
+    
+    if (error) {
+        console.error("Ошибка при вставке:", error); // ЭТО ВАЖНО
+        alert("Ошибка базы данных: " + error.message);
+        return;
+    }
+    
+    employees.push({ id: fullId, name: nameVal, days: [0, 0, 0, 0, 0, 0] });
+    renderTable();
+}
 
         async function deleteEmployee(id, index) {
             if(confirm('Удалить?')) {
