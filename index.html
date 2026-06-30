@@ -10,8 +10,27 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.12.0/tsparticles.bundle.min.js"></script>
     <style>
-        :root { --bg-grad-1: #050505; --bg-grad-2: #0a0a20; --bg-grad-3: #0d1a12; --bg-grad-4: #1a0a1a; --panel-bg: rgba(45, 45, 48, 0.85); --text-main: #ffffff; --text-muted: #aaaaaa; --border-color: rgba(255,255,255,0.05); --input-bg: rgba(30, 30, 30, 0.8); --input-border: #3e3e42; --hover-row: rgba(0, 120, 215, 0.15); --shadow: 0 8px 32px rgba(0,0,0,0.5); }
-        [data-theme="light"] { --bg-grad-1: #f5f7fa; --bg-grad-2: #e4e8f0; --bg-grad-3: #dcedc8; --bg-grad-4: #e1bee7; --panel-bg: rgba(255, 255, 255, 0.85); --text-main: #222222; --text-muted: #555555; --border-color: rgba(0,0,0,0.1); --input-bg: rgba(240, 240, 240, 0.9); --input-border: #cccccc; --hover-row: rgba(0, 120, 215, 0.08); --shadow: 0 8px 32px rgba(0,0,0,0.1); }
+        :root { 
+            --bg-grad-1: #050505; --bg-grad-2: #0a0a20; --bg-grad-3: #0d1a12; --bg-grad-4: #1a0a1a; 
+            --panel-bg: rgba(30, 30, 35, 0.65); 
+            --text-main: #ffffff; --text-muted: #aaaaaa; 
+            --border-color: rgba(255,255,255,0.08); 
+            --input-bg: rgba(30, 30, 30, 0.6); 
+            --input-border: #3e3e42; 
+            --hover-row: rgba(0, 120, 215, 0.15); 
+            --shadow: 0 8px 32px rgba(0,0,0,0.5); 
+        }
+        [data-theme="light"] { 
+            --bg-grad-1: #f5f7fa; --bg-grad-2: #e4e8f0; --bg-grad-3: #dcedc8; --bg-grad-4: #e1bee7; 
+            --panel-bg: rgba(255, 255, 255, 0.65); 
+            --text-main: #222222; --text-muted: #555555; 
+            --border-color: rgba(0,0,0,0.08); 
+            --input-bg: rgba(240, 240, 240, 0.6); 
+            --input-border: #cccccc; 
+            --hover-row: rgba(0, 120, 215, 0.08); 
+            --shadow: 0 8px 32px rgba(0,0,0,0.1); 
+        }
+        
         body, html { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: transparent; font-size: 14px; color: var(--text-main); transition: color 0.4s ease; }
         
         #tsparticles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2), var(--bg-grad-3), var(--bg-grad-4)); background-size: 400% 400%; animation: gradientBG 15s ease infinite; transition: background 0.5s ease; }
@@ -19,60 +38,71 @@
         
         .dashboard-container { padding: 15px 25px; position: relative; z-index: 2; max-width: 1600px; margin: 0 auto; }
         
-        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-        .header h1 { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 2.2rem; margin: 0; color: #0078d7; text-shadow: 0 4px 10px rgba(0, 120, 215, 0.3); }
-        .user-badge { display: flex; align-items: center; gap: 15px; background: var(--panel-bg); padding: 6px 20px; border-radius: 30px; border: 1px solid var(--border-color); }
-        .btn-theme { background: transparent; border: 1px solid var(--border-color); font-size: 1.2rem; cursor: pointer; padding: 5px 10px; border-radius: 50%; color: var(--text-main); }
-        .btn-logout { background: #d13438; border: none; color: white; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-weight: bold; }
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; background: var(--panel-bg); backdrop-filter: blur(10px); padding: 10px 20px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: var(--shadow); }
+        .header-left { display: flex; align-items: center; gap: 20px; }
+        .logo-area { display: flex; align-items: center; gap: 12px; }
+        .crm-logo { width: 32px; height: 32px; object-fit: contain; }
+        .header h1 { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.8rem; margin: 0; color: #0078d7; text-shadow: 0 4px 10px rgba(0, 120, 215, 0.2); letter-spacing: 0.5px; }
+        
+        .burger-menu-btn { display: flex; flex-direction: column; justify-content: space-between; width: 22px; height: 16px; background: transparent; border: none; cursor: pointer; padding: 0; }
+        .burger-menu-btn span { width: 100%; height: 2.5px; background-color: var(--text-main); border-radius: 2px; transition: 0.3s ease; }
+        .burger-menu-btn:hover span { background-color: #0078d7; }
+        
+        .header-right { display: flex; align-items: center; gap: 15px; }
+        .user-badge { display: flex; align-items: center; gap: 15px; background: rgba(0, 0, 0, 0.2); padding: 6px 18px; border-radius: 30px; border: 1px solid var(--border-color); }
+        [data-theme="light"] .user-badge { background: rgba(255, 255, 255, 0.5); }
+        .btn-theme { background: transparent; border: 1px solid var(--border-color); font-size: 1.2rem; cursor: pointer; padding: 5px 10px; border-radius: 50%; color: var(--text-main); display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; }
+        .btn-logout { background: #d13438; border: none; color: white; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-logout:hover { background: #a8282b; }
         
         .content-grid { display: grid; grid-template-columns: 65% 35%; gap: 20px; margin-bottom: 20px; }
         .col-left, .col-right { display: flex; flex-direction: column; gap: 20px; }
         
-        .panel { background-color: var(--panel-bg); backdrop-filter: blur(12px); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: var(--shadow); }
+        .panel { background-color: var(--panel-bg); backdrop-filter: blur(10px); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: var(--shadow); }
         .panel-title { font-size: 1.1rem; color: var(--text-muted); margin-top: 0; margin-bottom: 15px; font-weight: 600; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; text-transform: uppercase; }
         
         table { width: 100%; border-collapse: collapse; text-align: left; table-layout: fixed; }
         th { color: var(--text-muted); font-size: 0.8rem; padding: 10px 4px; border-bottom: 2px solid var(--input-border); text-align: center; }
         th:first-child, th:nth-child(2) { text-align: left; }
         td { padding: 6px 4px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; text-align: center; vertical-align: middle; }
-        .cell-input { width: 100%; max-width: 45px; padding: 6px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); text-align: center; border-radius: 6px; }
+        tfoot td { padding: 10px 4px; border-top: 2px solid var(--input-border); border-bottom: none; font-size: 0.95rem; }
+        
+        .cell-input { width: 100%; max-width: 45px; padding: 6px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); text-align: center; border-radius: 6px; transition: 0.3s; }
+        .cell-input:focus { border-color: #0078d7; outline: none; background: rgba(0, 120, 215, 0.1); }
         .cell-input:disabled { background: transparent; border: none; font-weight: bold; -webkit-appearance: none; }
         
-        /* Светофор */
         .traffic-light { width: 16px; height: 16px; border-radius: 50%; margin: 0 auto; box-shadow: 0 2px 5px rgba(0,0,0,0.3); transition: 0.3s; }
         .tl-green { background-color: #107c10; box-shadow: 0 0 10px rgba(16, 124, 16, 0.8); }
         .tl-yellow { background-color: #f39c12; box-shadow: 0 0 10px rgba(243, 156, 18, 0.8); }
         .tl-red { background-color: #d13438; box-shadow: 0 0 10px rgba(209, 52, 56, 0.8); }
         
-        /* Блок статистики */
-        .stats-grid { display: flex; gap: 15px; justify-content: space-between; margin-bottom: 15px; }
+        .stats-grid { display: flex; gap: 15px; justify-content: space-between; }
         .stat-box { flex: 1; background: rgba(0, 120, 215, 0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(0, 120, 215, 0.3); text-align: center; }
         .stat-box span { display: block; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; }
         .stat-box b { font-size: 1.8rem; color: #0078d7; }
         .stat-danger b { color: #d13438; }
         
-        /* Посещаемость */
         .att-cell { width: 28px; height: 28px; margin: 0 auto; border-radius: 6px; border: 1px solid var(--border-color); transition: 0.2s; }
         .att-0 { background-color: transparent; } .att-1 { background-color: #107c10; } .att-2 { background-color: #f39c12; } .att-3 { background-color: #d13438; }
         .att-interactive { cursor: pointer; } .att-interactive:hover { transform: scale(1.1); }
         
-        /* Админ-панель */
-        .admin-panel { background-color: var(--panel-bg); padding: 20px; border-left: 5px solid #0078d7; display: flex; flex-wrap: wrap; gap: 20px; border-radius: 0 12px 12px 0; margin-top: 20px;}
+        /* Стили для нового блока Глобальных итогов */
+        .global-totals-block { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color); justify-content: space-between;}
+        .gt-item { flex: 1; min-width: 60px; text-align: center; }
+        .gt-item label { display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; text-transform: uppercase; }
+        .gt-item input { width: 100%; max-width: 70px; padding: 6px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-main); text-align: center; transition: 0.3s; font-weight: bold;}
+        .gt-item input:focus { border-color: #0078d7; outline: none; background: rgba(0, 120, 215, 0.1); }
+        .gt-item input:disabled { border: none; background: transparent; font-size: 1.1rem; padding: 0; }
+        .gt-item.highlight span { display: block; font-size: 1.2rem; font-weight: bold; color: #27ae60; padding-top: 4px; }
+        
+        .admin-panel { background-color: var(--panel-bg); backdrop-filter: blur(10px); padding: 20px; border-left: 5px solid #0078d7; display: flex; flex-wrap: wrap; gap: 20px; border-radius: 0 12px 12px 0; margin-top: 20px;}
         .admin-section { flex: 1; min-width: 250px; }
         .input-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .input-group input { max-width: 80px; padding: 6px; text-align: right; border-radius: 4px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); }
         .hidden { display: none !important; }
 
-        /* --- CSS УВЕДОМЛЕНИЙ --- */
-        #toastContainer {
-            position: fixed; bottom: 30px; right: 30px; display: flex; flex-direction: column; gap: 15px; z-index: 10000;
-        }
-        .toast {
-            background: rgba(45, 45, 48, 0.95); backdrop-filter: blur(10px); border-left: 5px solid #0078d7; 
-            border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); padding: 15px 20px; 
-            display: flex; align-items: center; gap: 15px; color: white; font-weight: 500; font-size: 1rem; 
-            animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; max-width: 400px;
-        }
+        #toastContainer { position: fixed; bottom: 30px; right: 30px; display: flex; flex-direction: column; gap: 15px; z-index: 10000; }
+        .toast { background: rgba(45, 45, 48, 0.95); backdrop-filter: blur(10px); border-left: 5px solid #0078d7; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); padding: 15px 20px; display: flex; align-items: center; gap: 15px; color: white; font-weight: 500; font-size: 1rem; animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; max-width: 400px; }
         [data-theme="light"] .toast { background: rgba(255, 255, 255, 0.95); color: #222; }
         .toast img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
         
@@ -85,8 +115,16 @@
 
     <div class="dashboard-container">
         <div class="header">
-            <h1>TIGER CRM</h1>
-            <div style="display:flex; gap: 15px;">
+            <div class="header-left">
+                <button class="burger-menu-btn" id="burgerBtn" title="Открыть меню">
+                    <span></span><span></span><span></span>
+                </button>
+                <div class="logo-area">
+                    <img src="https://cdn-icons-png.flaticon.com/512/1041/1041883.png" class="crm-logo" alt="Tiger CRM Logo">
+                    <h1>TIGER CRM</h1>
+                </div>
+            </div>
+            <div class="header-right">
                 <button id="themeToggle" class="btn-theme" onclick="toggleTheme()">☀️</button>
                 <div class="user-badge">
                     <span id="displayUsername" style="color:#0078d7; font-weight:bold;">Loading...</span>
@@ -97,12 +135,6 @@
 
         <div class="content-grid">
             <div class="col-left">
-                <div class="stats-grid">
-                    <div class="stat-box"><span>Сотрудников в штате</span><b id="statCount">0</b></div>
-                    <div class="stat-box stat-danger"><span>Отсутствий за неделю</span><b id="statAbsences">0</b></div>
-                    <div class="stat-box"><span>План отдела (неделя)</span><b id="statPlanTotal">0</b></div>
-                </div>
-
                 <div class="panel">
                     <h3 class="panel-title">Реестр сотрудников и данные</h3>
                     <table>
@@ -114,7 +146,17 @@
                             </tr>
                         </thead>
                         <tbody id="employeeTableBody"></tbody>
+                        <tfoot id="employeeTableFoot"></tfoot>
                     </table>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-box"><span>Сотрудников в штате</span><b id="statCount">0</b></div>
+                    <div class="stat-box stat-danger"><span>Отсутствий за неделю</span><b id="statAbsences">0</b></div>
+                    <div class="stat-box"><span>План отдела (неделя)</span><b id="statPlanTotal">0</b></div>
+                    <div class="stat-box" style="border-color: #107c10; background: rgba(16, 124, 16, 0.08);">
+                        <span>Данные компании за сегодня</span><b id="statTodayTotal" style="color: #107c10;">0</b>
+                    </div>
                 </div>
 
                 <div class="panel">
@@ -135,6 +177,30 @@
                 <div class="panel">
                     <h3 class="panel-title">Глобальное распределение</h3>
                     <div style="height: 200px;"><canvas id="globalChart"></canvas></div>
+                    
+                    <div class="global-totals-block">
+                        <div class="gt-item">
+                            <label>ОБЩЕЕ</label>
+                            <input type="number" id="gtTotal" onchange="updateGlobalTotals()">
+                        </div>
+                        <div class="gt-item">
+                            <label style="color: #0078d7;">НК</label>
+                            <input type="number" id="gtNk" onchange="updateGlobalTotals()">
+                        </div>
+                        <div class="gt-item">
+                            <label style="color: #f39c12;">ЖВ</label>
+                            <input type="number" id="gtZv" onchange="updateGlobalTotals()">
+                        </div>
+                        <div class="gt-item highlight">
+                            <label>КАМЕНКА</label>
+                            <span id="gtKam">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3 class="panel-title">Данные компании (ПН - СБ)</h3>
+                    <div style="height: 180px;"><canvas id="companyDaysChart"></canvas></div>
                 </div>
 
                 <div class="panel">
@@ -144,17 +210,25 @@
             </div>
         </div>
 
+        <div class="panel" style="margin-bottom: 20px;">
+            <h3 class="panel-title">Кол-во всех данных компании (по городам)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:20%; text-align:left;">Город</th>
+                        <th>ПН</th><th>ВТ</th><th>СР</th><th>ЧТ</th><th>ПТ</th><th>СБ</th>
+                        <th>Итого</th>
+                    </tr>
+                </thead>
+                <tbody id="cityTableBody"></tbody>
+            </table>
+        </div>
+
         <div id="adminPanel" class="admin-panel hidden">
             <div class="admin-section">
                 <h3 style="color:var(--text-muted); border-bottom:1px solid var(--border-color); padding-bottom:10px;">Эффективность (План)</h3>
                 <div class="input-group"><label>Цель на день (на чел.):</label><input type="number" id="planDaily" onchange="updatePlans()"></div>
                 <div class="input-group"><label>Цель на неделю (на чел.):</label><input type="number" id="planWeekly" onchange="updatePlans()"></div>
-            </div>
-            <div class="admin-section">
-                <h3 style="color:var(--text-muted); border-bottom:1px solid var(--border-color); padding-bottom:10px;">Глобальные распределения</h3>
-                <div class="input-group"><label>Общее количество:</label><input type="number" id="globalTotal" onchange="uploadGlobalMetrics()"></div>
-                <div class="input-group"><label>Жёлтые Воды:</label><input type="number" id="globalZV" onchange="uploadGlobalMetrics()"></div>
-                <div class="input-group"><label>Никополь:</label><input type="number" id="globalNikopol" onchange="uploadGlobalMetrics()"></div>
             </div>
         </div>
     </div>
@@ -162,7 +236,24 @@
     <div id="toastContainer"></div>
 
     <script>
-        tsParticles.load("tsparticles", { particles: { number: { value: 40 }, color: { value: "#888888" }, links: { enable: true, distance: 150, opacity: 0.2 }, move: { enable: true, speed: 0.5 } } });
+        tsParticles.load("tsparticles", {
+            fpsLimit: 60,
+            particles: {
+                number: { value: 50, density: { enable: true, value_area: 800 } },
+                color: { value: "#0078d7" },
+                shape: { type: "circle" },
+                opacity: { value: 0.4 },
+                size: { value: { min: 1, max: 3 } },
+                links: { enable: true, distance: 150, color: "#0078d7", opacity: 0.3, width: 1 },
+                move: { enable: true, speed: 0.8, direction: "none", random: false, straight: false, outModes: { default: "out" } }
+            },
+            interactivity: {
+                detectsOn: "canvas",
+                events: { onHover: { enable: true, mode: "grab" }, resize: true },
+                modes: { grab: { distance: 160, links: { opacity: 0.5 } } }
+            },
+            retina_detect: true
+        });
 
         const SUPABASE_URL = "https://geolvowpvdxnimypcvfx.supabase.co"; 
         const SUPABASE_ANON_KEY = "sb_publishable_NYYVxFGX8ZnVK0CyEFPehg_z58eWBut"; 
@@ -170,47 +261,47 @@
 
         let isAdmin = false;
         let employees = [];
-        let metricsData = { daily_plan: 26, weekly_plan: 130 }; 
+        let metricsData = { daily_plan: 26, weekly_plan: 130, total: 0, nikopol: 0, zv: 0 }; 
+        
+        let cityDays = { 
+            nikopol: [0,0,0,0,0,0], 
+            zv: [0,0,0,0,0,0], 
+            kamenka: [0,0,0,0,0,0] 
+        };
+
         let barChartInst = null;
         let globalChartInst = null;
+        let companyDaysChartInst = null;
         const dbDaysKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
-        // Звук для уведомлений
         const notifySound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
 
         function showNotification(message, imgUrl) {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             toast.className = 'toast';
-            toast.innerHTML = `<img src="${imgUrl}" alt="cat"><div>${message}</div>`;
+            toast.innerHTML = `<img src="${imgUrl}" alt="icon"><div>${message}</div>`;
             container.appendChild(toast);
-            
-            notifySound.play().catch(e => console.log("Браузер заблокировал автовоспроизведение звука", e));
-
-            setTimeout(() => {
-                toast.style.animation = 'slideOutRight 0.5s forwards';
-                setTimeout(() => toast.remove(), 500);
-            }, 6000);
+            notifySound.play().catch(e => console.log("Звук заблокирован", e));
+            setTimeout(() => { toast.style.animation = 'slideOutRight 0.5s forwards'; setTimeout(() => toast.remove(), 500); }, 10000);
         }
 
-        // Проверка времени для перерывов
+        document.getElementById('burgerBtn').addEventListener('click', () => {
+            showNotification('Раздел меню находится в разработке 🚀', 'https://cdn-icons-png.flaticon.com/512/1041/1041883.png');
+        });
+
         function checkTimeNotifications() {
             const now = new Date();
             const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
             const today = now.toDateString();
-
             const times = {
-                '10:30': { msg: 'Перерывчик!', img: 'https://cdn-icons-png.flaticon.com/512/1055/1055660.png' },
+                '10:30': { msg: 'Все на перекур!', img: 'https://cdn-icons-png.flaticon.com/512/1055/1055660.png' },
                 '13:20': { msg: 'А как бы шо-то обэда будет, а то там 25 людей не кормленные...', img: 'https://cdn-icons-png.flaticon.com/512/1864/1864514.png' },
                 '16:00': { msg: 'Перерывчик!', img: 'https://cdn-icons-png.flaticon.com/512/1055/1055660.png' }
             };
-
-            if (times[currentTime]) {
-                const flagKey = `notified_time_${currentTime}_${today}`;
-                if (!localStorage.getItem(flagKey)) {
-                    showNotification(times[currentTime].msg, times[currentTime].img);
-                    localStorage.setItem(flagKey, 'true');
-                }
+            if (times[currentTime] && !localStorage.getItem(`notified_time_${currentTime}_${today}`)) {
+                showNotification(times[currentTime].msg, times[currentTime].img);
+                localStorage.setItem(`notified_time_${currentTime}_${today}`, 'true');
             }
         }
 
@@ -232,13 +323,19 @@
             let { data: metrics } = await db.from('global_metrics').select('*').eq('id', 1).single();
             if (metrics) {
                 metricsData = metrics;
-                document.getElementById('globalTotal').value = metrics.total || 0;
-                document.getElementById('globalZV').value = metrics.zv || 0;
-                document.getElementById('globalNikopol').value = metrics.nikopol || 0;
-                
                 document.getElementById('planDaily').value = metrics.daily_plan || 26;
                 document.getElementById('planWeekly').value = metrics.weekly_plan || 130;
-                metricsData.weekly_plan = metrics.weekly_plan || 130;
+                
+                document.getElementById('gtTotal').value = metrics.total || 0;
+                document.getElementById('gtNk').value = metrics.nikopol || 0;
+                document.getElementById('gtZv').value = metrics.zv || 0;
+                
+                if (metrics.city_days) {
+                    try {
+                        let parsed = typeof metrics.city_days === 'string' ? JSON.parse(metrics.city_days) : metrics.city_days;
+                        if(parsed.nikopol) cityDays = parsed;
+                    } catch(e) { console.error("Ошибка парсинга city_days:", e); }
+                }
             }
 
             let { data: dbEmployees } = await db.from('employees').select('*').order('created_at', { ascending: true });
@@ -261,35 +358,61 @@
             await db.from('global_metrics').update({ daily_plan: daily, weekly_plan: weekly }).eq('id', 1);
         }
 
-        async function uploadGlobalMetrics() {
+        // ОБНОВЛЕНИЕ ГЛОБАЛЬНЫХ ИТОГОВ (Под графиком)
+        async function updateGlobalTotals() {
             if(!isAdmin) return;
-            const t = parseInt(document.getElementById('globalTotal').value) || 0;
-            const z = parseInt(document.getElementById('globalZV').value) || 0;
-            const n = parseInt(document.getElementById('globalNikopol').value) || 0;
+            const t = parseInt(document.getElementById('gtTotal').value) || 0;
+            const n = parseInt(document.getElementById('gtNk').value) || 0;
+            const z = parseInt(document.getElementById('gtZv').value) || 0;
             
-            metricsData.total = t; metricsData.zv = z; metricsData.nikopol = n;
-            updateCharts(); 
+            metricsData.total = t;
+            metricsData.nikopol = n;
+            metricsData.zv = z;
 
-            await db.from('global_metrics').update({ total: t, zv: z, nikopol: n }).eq('id', 1);
+            renderAll();
+            await db.from('global_metrics').update({ total: t, nikopol: n, zv: z }).eq('id', 1);
+        }
+
+        async function updateCityDay(cityId, dayIdx, val) {
+            if(!isAdmin) return;
+            cityDays[cityId][dayIdx] = parseInt(val) || 0;
+            renderAll(); 
+            await db.from('global_metrics').update({ city_days: cityDays }).eq('id', 1);
         }
 
         function renderAll() {
             const tBodyData = document.getElementById('employeeTableBody');
+            const tFootData = document.getElementById('employeeTableFoot');
             const tBodyAtt = document.getElementById('attendanceTableBody');
-            tBodyData.innerHTML = ''; tBodyAtt.innerHTML = '';
+            const tBodyCity = document.getElementById('cityTableBody');
+            
+            tBodyData.innerHTML = ''; tFootData.innerHTML = '';
+            tBodyAtt.innerHTML = ''; tBodyCity.innerHTML = '';
+            
+            // Настройка блокировки полей
+            document.getElementById('gtTotal').disabled = !isAdmin;
+            document.getElementById('gtNk').disabled = !isAdmin;
+            document.getElementById('gtZv').disabled = !isAdmin;
+            
+            // Расчет Каменского для панели
+            let calcKam = (metricsData.total || 0) - ((metricsData.nikopol || 0) + (metricsData.zv || 0));
+            if(calcKam < 0) calcKam = 0;
+            document.getElementById('gtKam').innerText = calcKam;
             
             let totalAbsences = 0;
             let currentGlobalSum = 0;
+            let daySums = [0, 0, 0, 0, 0, 0]; 
             const today = new Date().toDateString();
             
+            // 1. РЕНДЕР СОТРУДНИКОВ
             employees.forEach((emp, index) => {
                 totalAbsences += emp.attendance.filter(a => a === 3).length;
-                
                 let totalData = emp.days.reduce((a, b) => (a||0) + (b||0), 0);
                 currentGlobalSum += totalData;
                 let disabledAttr = isAdmin ? '' : 'disabled';
                 
-                // === ПРОВЕРКА УВЕДОМЛЕНИЙ ===
+                for (let d = 0; d < 6; d++) { daySums[d] += (emp.days[d] || 0); }
+                
                 if (totalData >= 5 && !localStorage.getItem(`evt_5_${emp.id}_${today}`)) {
                     showNotification(`У ${emp.name} уже 5 данных, круто!`, 'https://cdn-icons-png.flaticon.com/512/3573/3573974.png');
                     localStorage.setItem(`evt_5_${emp.id}_${today}`, 'true');
@@ -299,17 +422,13 @@
                     localStorage.setItem(`evt_10_${emp.id}_${today}`, 'true');
                 }
                 
-                let planTarget = metricsData.weekly_plan;
-                let percent = (totalData / planTarget) * 100;
-                let tlClass = 'tl-red';
-                if (percent >= 100) tlClass = 'tl-green';
-                else if (percent >= 75) tlClass = 'tl-yellow';
+                let percent = (totalData / (metricsData.weekly_plan || 130)) * 100;
+                let tlClass = percent >= 100 ? 'tl-green' : (percent >= 75 ? 'tl-yellow' : 'tl-red');
 
                 let trData = document.createElement('tr');
                 trData.innerHTML = `<td style="color:#0078d7;font-family:monospace;font-size:0.85rem;">${emp.id}</td><td>${emp.name}</td>` + 
                     emp.days.map((val, dIdx) => `<td><input type="number" class="cell-input" value="${val||0}" onchange="updateEmpDay(${index}, ${dIdx}, this.value)" ${disabledAttr}></td>`).join('') +
-                    `<td><div class="traffic-light ${tlClass}" title="${Math.round(percent)}% от плана"></div></td>` +
-                    `<td style="font-weight:bold;color:#107c10;">${totalData}</td>`;
+                    `<td><div class="traffic-light ${tlClass}" title="${Math.round(percent)}% от плана"></div></td><td style="font-weight:bold;color:#107c10;">${totalData}</td>`;
                 tBodyData.appendChild(trData);
 
                 let trAtt = document.createElement('tr');
@@ -323,17 +442,44 @@
                 tBodyAtt.appendChild(trAtt);
             });
 
-            // === ПРОВЕРКА ГЛОБАЛЬНОГО УВЕДОМЛЕНИЯ ===
+            let trFoot = document.createElement('tr');
+            trFoot.style.background = 'rgba(0, 120, 215, 0.06)';
+            let footHtml = `<td style="color:var(--text-muted); font-size:0.8rem;">-</td><td style="text-align:left; color:var(--text-main); font-weight:bold; padding-left:4px;">Итого:</td>`;
+            for(let d = 0; d < 6; d++) { footHtml += `<td style="color:#0078d7; font-weight:bold; font-size:0.95rem;">${daySums[d]}</td>`; }
+            footHtml += `<td></td><td style="color:#107c10; font-weight:bold; font-size:0.95rem;">${currentGlobalSum}</td>`;
+            trFoot.innerHTML = footHtml;
+            tFootData.appendChild(trFoot);
+
+            // 2. РЕНДЕР ТАБЛИЦЫ ГОРОДОВ
+            const citiesConf = [
+                { id: 'nikopol', name: 'Никополь', color: '#0078d7' },
+                { id: 'zv', name: 'Жёлтые Воды', color: '#f39c12' },
+                { id: 'kamenka', name: 'Каменское', color: '#27ae60' }
+            ];
+            let disabledAttr = isAdmin ? '' : 'disabled';
+            
+            citiesConf.forEach(city => {
+                let days = cityDays[city.id] || [0,0,0,0,0,0];
+                let sum = days.reduce((a,b)=>a+b, 0);
+                let tr = document.createElement('tr');
+                tr.innerHTML = `<td style="font-weight:bold; color:${city.color}; text-align:left;">${city.name}</td>` + 
+                    days.map((val, idx) => `<td><input type="number" class="cell-input" value="${val}" onchange="updateCityDay('${city.id}', ${idx}, this.value)" ${disabledAttr}></td>`).join('') +
+                    `<td style="font-weight:bold; color:${city.color}; font-size:1.1rem;">${sum}</td>`;
+                tBodyCity.appendChild(tr);
+            });
+
+            // 3. АВТО-ОБНОВЛЕНИЕ ГЛОБАЛЬНОЙ СТАТИСТИКИ 
+            document.getElementById('statTodayTotal').innerText = metricsData.total || 0;
+            document.getElementById('statCount').innerText = employees.length;
+            document.getElementById('statAbsences').innerText = totalAbsences;
+            document.getElementById('statPlanTotal').innerText = employees.length * (metricsData.weekly_plan || 130);
+
             if (currentGlobalSum >= 50 && !localStorage.getItem(`evt_global_50_${today}`)) {
                 showNotification(`Достигнуто общее 50 кол-во данных за день!`, 'https://cdn-icons-png.flaticon.com/512/3573/3573977.png');
                 localStorage.setItem(`evt_global_50_${today}`, 'true');
             }
 
-            document.getElementById('statCount').innerText = employees.length;
-            document.getElementById('statAbsences').innerText = totalAbsences;
-            document.getElementById('statPlanTotal').innerText = employees.length * (metricsData.weekly_plan || 130);
-
-            updateCharts();
+            updateCharts(calcKam);
         }
 
         async function updateEmpDay(eIdx, dIdx, val) {
@@ -354,7 +500,7 @@
             await db.from('employees').update({ [keys[dIdx]]: next }).eq('id', employees[eIdx].id);
         }
 
-        function updateCharts() {
+        function updateCharts(calculatedKamenka) {
             if(!barChartInst) {
                 barChartInst = new Chart(document.getElementById('barChart'), {
                     type: 'bar', data: { labels: [], datasets: [{ label: 'Объем', data: [], backgroundColor: '#0078d7', borderRadius: 4 }] },
@@ -365,37 +511,48 @@
             barChartInst.data.datasets[0].data = employees.map(e => e.days.reduce((a,b)=>a+b,0));
             barChartInst.update();
 
-            // Глобальное распределение (Полукруг)
+            // Круговой график с 4 секциями (Общее, ЖВ, НК, Каменка)
             if(!globalChartInst) {
                 globalChartInst = new Chart(document.getElementById('globalChart'), {
                     type: 'doughnut', 
                     data: { 
-                        labels: ['Жёлтые Воды', 'Никополь', 'Каменское'], 
-                        datasets: [{ 
-                            data: [0, 0, 0], 
-                            backgroundColor: ['#f39c12', '#0078d7', '#27ae60'], 
-                            borderWidth: 0 
-                        }] 
+                        labels: ['Общее', 'Жёлтые Воды', 'Никополь', 'Каменское'], 
+                        datasets: [{ data: [0, 0, 0, 0], backgroundColor: ['#666666', '#f39c12', '#0078d7', '#27ae60'], borderWidth: 0 }] 
                     },
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false, 
-                        rotation: -90,
-                        circumference: 180,
-                        plugins: { 
-                            legend: { position: 'bottom', labels: { color: '#aaaaaa' } } 
-                        } 
-                    }
+                    options: { responsive: true, maintainAspectRatio: false, rotation: -90, circumference: 180, plugins: { legend: { position: 'bottom', labels: { color: '#aaaaaa', boxWidth: 10 } } } }
                 });
             }
-            
-            let zv = metricsData.zv || 0;
-            let niko = metricsData.nikopol || 0;
-            let total = metricsData.total || 0;
-            let kamianske = total - (zv + niko);
-            
-            globalChartInst.data.datasets[0].data = [zv, niko, kamianske > 0 ? kamianske : 0];
+            globalChartInst.data.datasets[0].data = [
+                metricsData.total || 0,
+                metricsData.zv || 0, 
+                metricsData.nikopol || 0, 
+                calculatedKamenka 
+            ];
             globalChartInst.update();
+
+            if(!companyDaysChartInst) {
+                companyDaysChartInst = new Chart(document.getElementById('companyDaysChart'), {
+                    type: 'line',
+                    data: {
+                        labels: ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ'],
+                        datasets: [
+                            { label: 'Никополь', data: cityDays.nikopol, borderColor: '#0078d7', backgroundColor: 'rgba(0, 120, 215, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointBackgroundColor: '#0078d7' },
+                            { label: 'Жёлтые Воды', data: cityDays.zv, borderColor: '#f39c12', backgroundColor: 'rgba(243, 156, 18, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointBackgroundColor: '#f39c12' },
+                            { label: 'Каменское', data: cityDays.kamenka, borderColor: '#27ae60', backgroundColor: 'rgba(39, 174, 96, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointBackgroundColor: '#27ae60' }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: true, position: 'top', labels: { color: '#aaaaaa', usePointStyle: true, boxWidth: 8 } } },
+                        scales: { x: { ticks: { color: '#aaaaaa' }, grid: { display: false } }, y: { ticks: { color: '#aaaaaa' }, grid: { color: 'rgba(128,128,128,0.1)' } } }
+                    }
+                });
+            } else {
+                companyDaysChartInst.data.datasets[0].data = cityDays.nikopol;
+                companyDaysChartInst.data.datasets[1].data = cityDays.zv;
+                companyDaysChartInst.data.datasets[2].data = cityDays.kamenka;
+                companyDaysChartInst.update();
+            }
         }
 
         function logout() { localStorage.removeItem('crm_role'); window.location.href = 'login.html'; }
@@ -406,9 +563,8 @@
             document.getElementById('displayUsername').innerText = `${localStorage.getItem('crm_username')} [${localStorage.getItem('crm_role').toUpperCase()}]`;
             isAdmin = localStorage.getItem('crm_role') === 'admin';
             if (isAdmin) document.getElementById('adminPanel').classList.remove('hidden');
-            await loadCloudData(); 
             
-            // Запускаем проверку времени каждые 30 секунд
+            await loadCloudData(); 
             setInterval(checkTimeNotifications, 30000);
             
             db.channel('realtime-sync')
