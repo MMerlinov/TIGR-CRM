@@ -192,7 +192,7 @@
                             <input type="number" id="gtZv" onchange="updateGlobalTotals()">
                         </div>
                         <div class="gt-item highlight">
-                            <label>КАМЕНКА</label>
+                            <label>КАМЕНЬ</label>
                             <span id="gtKam">0</span>
                         </div>
                     </div>
@@ -454,7 +454,7 @@
             const citiesConf = [
                 { id: 'nikopol', name: 'Никополь', color: '#0078d7' },
                 { id: 'zv', name: 'Жёлтые Воды', color: '#f39c12' },
-                { id: 'kamenka', name: 'Каменское', color: '#27ae60' }
+                { id: 'kamenka', name: 'Камень', color: '#27ae60' }
             ];
             let disabledAttr = isAdmin ? '' : 'disabled';
             
@@ -516,7 +516,7 @@
                 globalChartInst = new Chart(document.getElementById('globalChart'), {
                     type: 'doughnut', 
                     data: { 
-                        labels: ['Общее', 'Жёлтые Воды', 'Никополь', 'Каменское'], 
+                        labels: ['Общее', 'Жёлтые Воды', 'Никополь', 'Камень'], 
                         datasets: [{ data: [0, 0, 0, 0], backgroundColor: ['#666666', '#f39c12', '#0078d7', '#27ae60'], borderWidth: 0 }] 
                     },
                     options: { responsive: true, maintainAspectRatio: false, rotation: -90, circumference: 180, plugins: { legend: { position: 'bottom', labels: { color: '#aaaaaa', boxWidth: 10 } } } }
@@ -538,7 +538,7 @@
                         datasets: [
                             { label: 'Никополь', data: cityDays.nikopol, borderColor: '#0078d7', backgroundColor: 'rgba(0, 120, 215, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointBackgroundColor: '#0078d7' },
                             { label: 'Жёлтые Воды', data: cityDays.zv, borderColor: '#f39c12', backgroundColor: 'rgba(243, 156, 18, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointBackgroundColor: '#f39c12' },
-                            { label: 'Каменское', data: cityDays.kamenka, borderColor: '#27ae60', backgroundColor: 'rgba(39, 174, 96, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointBackgroundColor: '#27ae60' }
+                            { label: 'Камень', data: cityDays.kamenka, borderColor: '#27ae60', backgroundColor: 'rgba(39, 174, 96, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointBackgroundColor: '#27ae60' }
                         ]
                     },
                     options: {
