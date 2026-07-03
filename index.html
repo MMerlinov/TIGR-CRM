@@ -87,7 +87,7 @@
 
         table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: left; table-layout: fixed; }
         th { color: var(--text-muted); font-size: 0.85rem; padding: 12px 6px; border-bottom: 2px solid var(--input-border); text-align: center; text-transform: uppercase; letter-spacing: 0.5px; }
-        th:first-child, th:nth-child(2) { text-align: left; }
+        th:first-child { text-align: left; }
         td { padding: 9px 6px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; text-align: center; vertical-align: middle; transition: background 0.2s; }
         tbody tr:hover td { background-color: var(--hover-row); }
         tfoot td { padding: 14px 6px; border-top: 2px solid var(--input-border); border-bottom: none; font-size: 1rem; }
@@ -173,7 +173,7 @@
                     <table>
                         <thead>
                             <tr>
-                                <th style="width:12%">ID</th><th style="width:23%">Имя</th>
+                                <th style="width:35%">Имя</th>
                                 <th>ПН</th><th>ВТ</th><th>СР</th><th>ЧТ</th><th>ПТ</th><th>СБ</th>
                                 <th title="Эффективность к недельному плану">Эфф.</th><th>Общ</th>
                             </tr>
@@ -197,7 +197,7 @@
                     <table>
                         <thead>
                             <tr>
-                                <th style="width:12%">ID</th><th style="width:23%">Имя</th>
+                                <th style="width:35%">Имя</th>
                                 <th>ПН</th><th>ВТ</th><th>СР</th><th>ЧТ</th><th>ПТ</th><th>СБ</th>
                             </tr>
                         </thead>
@@ -362,11 +362,11 @@
             const rowsAtt = document.querySelectorAll('#attendanceTableBody tr');
             
             rowsData.forEach(row => {
-                const name = row.querySelector('td:nth-child(2)').innerText.toLowerCase();
+                const name = row.querySelector('td:nth-child(1)').innerText.toLowerCase();
                 row.style.display = name.includes(val) ? '' : 'none';
             });
             rowsAtt.forEach(row => {
-                const name = row.querySelector('td:nth-child(2)').innerText.toLowerCase();
+                const name = row.querySelector('td:nth-child(1)').innerText.toLowerCase();
                 row.style.display = name.includes(val) ? '' : 'none';
             });
         }
@@ -468,13 +468,13 @@
                 let tlClass = percent >= 100 ? 'tl-green' : (percent >= 75 ? 'tl-yellow' : 'tl-red');
 
                 let trData = document.createElement('tr');
-                trData.innerHTML = `<td style="color:#0078d7;font-family:monospace;font-size:0.85rem;">${String(emp.id).padStart(3, '0')}</td><td style="font-weight:700; color: ${emp.personal_color}; text-shadow: 0 0 8px ${emp.personal_color}40;">${emp.name}</td>` + 
+                trData.innerHTML = `<td style="font-weight:700; color: ${emp.personal_color}; text-shadow: 0 0 8px ${emp.personal_color}40;">${emp.name}</td>` + 
                     emp.days.map((val, dIdx) => `<td><input type="number" class="cell-input" value="${val||0}" onchange="updateEmpDay(${index}, ${dIdx}, this.value)" ${disabledAttr}></td>`).join('') +
                     `<td><div class="traffic-light ${tlClass}" title="${Math.round(percent)}% от плана"></div></td><td style="font-weight:900;color:#107c10;">${totalData}</td>`;
                 tBodyData.appendChild(trData);
 
                 let trAtt = document.createElement('tr');
-                let attHtml = `<td style="color:#0078d7;font-family:monospace;font-size:0.85rem;">${String(emp.id).padStart(3, '0')}</td><td style="font-weight:700; color: ${emp.personal_color};">${emp.name}</td>`;
+                let attHtml = `<td style="font-weight:700; color: ${emp.personal_color};">${emp.name}</td>`;
                 emp.attendance.forEach((st, dIdx) => {
                     let interactive = isAdmin ? 'att-interactive' : '';
                     let onClick = isAdmin ? `onclick="toggleAtt(${index}, ${dIdx})"` : '';
@@ -486,7 +486,7 @@
 
             let trFoot = document.createElement('tr');
             trFoot.style.background = 'rgba(0, 120, 215, 0.06)';
-            let footHtml = `<td style="color:var(--text-muted); font-size:0.8rem;">-</td><td style="text-align:left; color:var(--text-main); font-weight:900; padding-left:5px;">ИТОГО:</td>`;
+            let footHtml = `<td style="text-align:left; color:var(--text-main); font-weight:900; padding-left:5px;">ИТОГО:</td>`;
             for(let d = 0; d < 6; d++) { footHtml += `<td style="color:#0078d7; font-weight:900; font-size:1rem;">${daySums[d]}</td>`; }
             footHtml += `<td></td><td style="color:#107c10; font-weight:900; font-size:1.1rem;">${currentGlobalSum}</td>`;
             trFoot.innerHTML = footHtml;
