@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>TIGER CRM | Cloud Metro Dashboard</title>
-    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/1041/1041883.png">
+    <link rel="icon" type="image/png" href="https://i.imgur.com/92aAKxU.png">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -51,13 +51,14 @@
         
         #tsparticles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2), var(--bg-grad-3), var(--bg-grad-4)); background-size: 400% 400%; animation: gradientBG 15s ease infinite; transition: background 0.5s ease; }
         @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        @keyframes pulse { 0% { transform: scale(0.9); opacity: 0.7; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(0.9); opacity: 0.7; } }
         
         .dashboard-container { padding: 25px 30px; position: relative; z-index: 2; max-width: 1650px; margin: 0 auto; box-sizing: border-box; }
         
         .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; background: var(--panel-bg); backdrop-filter: blur(20px); padding: 15px 30px; border-radius: 20px; border: 1px solid var(--border-color); box-shadow: var(--shadow); }
         .header-left { display: flex; align-items: center; gap: 20px; }
         .logo-area { display: flex; align-items: center; gap: 15px; }
-        .crm-logo { width: 40px; height: 40px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0,120,215,0.4)); }
+        .crm-logo { width: 42px; height: 42px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0,120,215,0.5)); }
         .header h1 { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.9rem; margin: 0; color: #0078d7; text-shadow: 0 4px 12px rgba(0, 120, 215, 0.3); letter-spacing: 0.5px; }
         
         .header-right { display: flex; align-items: center; gap: 15px; }
@@ -123,10 +124,13 @@
         .gt-item input:disabled { border: none; background: transparent; font-size: 1.2rem; padding: 0; }
         .gt-item.highlight span { display: block; font-size: 1.25rem; font-weight: 900; color: #27ae60; padding-top: 4px; text-shadow: 0 0 8px rgba(39,174,96,0.3); }
         
-        .admin-panel { background-color: var(--panel-bg); backdrop-filter: blur(20px); padding: 22px; border-left: 5px solid #0078d7; display: flex; flex-wrap: wrap; gap: 25px; border-radius: 0 20px 20px 0; margin-top: 20px; box-shadow: var(--shadow); }
+        .admin-panel { background-color: var(--panel-bg); backdrop-filter: blur(20px); padding: 22px; border-left: 5px solid #0078d7; display: flex; flex-wrap: wrap; gap: 25px; border-radius: 20px; margin-top: 20px; box-shadow: var(--shadow); }
         .admin-section { flex: 1; min-width: 250px; }
         .input-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .input-group input { max-width: 95px; padding: 7px 12px; text-align: right; border-radius: 8px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); font-size: 0.95rem; font-weight: bold; }
+        .input-group input, .input-group textarea { width: 100%; max-width: 180px; padding: 7px 12px; border-radius: 8px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); font-size: 0.95rem; }
+        .input-group input[type="number"] { text-align: right; font-weight: bold; max-width: 95px; }
+        .btn-admin-action { background: linear-gradient(135deg, #0078d7, #005a9e); border: none; color: white; padding: 10px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; margin-top: 5px; }
+        .btn-admin-action:hover { box-shadow: 0 4px 12px rgba(0,120,215,0.4); }
         .hidden { display: none !important; }
 
         #toastContainer { position: fixed; bottom: 30px; right: 30px; display: flex; flex-direction: column; gap: 15px; z-index: 10000; }
@@ -136,19 +140,23 @@
         
         @keyframes slideInRight { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes slideOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(120%); opacity: 0; } }
-
-        /* Оптимизация контейнера под более толстый полукруглый график */
         .chart-container-semi { position: relative; height: 185px; width: 100%; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 5px; box-sizing: border-box; }
     </style>
 </head>
 <body>
+    <div id="loadingOverlay" style="display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-grad-1); z-index:9999; justify-content:center; align-items:center; flex-direction:column; transition: opacity 0.5s ease; backdrop-filter:blur(10px);">
+        <img src="https://i.imgur.com/92aAKxU.png" style="width:100px; animation: pulse 1.5s infinite; filter: drop-shadow(0 0 15px rgba(0,120,215,0.6));">
+        <h2 style="color:#0078d7; font-family: 'Montserrat', sans-serif; margin-top:20px; letter-spacing: 2px;">TIGR CRM</h2>
+        <p style="color:var(--text-muted); font-size:0.9rem; font-weight:600;">Синхронизация с облаком...</p>
+    </div>
+
     <div id="tsparticles"></div>
 
     <div class="dashboard-container">
         <div class="header">
             <div class="header-left">
                 <div class="logo-area">
-                    <img src="https://i.ibb.co/V0QkSPgp/3838da46-4677-4bdc-81d3-2a8b559bb700-removebg-preview.png" class="crm-logo" alt="Tiger CRM Logo">
+                    <img src="https://i.imgur.com/92aAKxU.png" class="crm-logo" alt="Tiger CRM Logo">
                     <h1>TIGER CRM</h1>
                 </div>
             </div>
@@ -191,7 +199,7 @@
                 </div>
 
                 <div class="panel">
-                    <div class="panel-header-flex" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 15px;">
+                    <div class="panel-header-flex">
                         <h3 class="panel-title">Посещаемость сотрудников</h3>
                     </div>
                     <table>
@@ -257,11 +265,29 @@
             </table>
         </div>
 
+        <!-- Улучшенная Панель Администратора -->
         <div id="adminPanel" class="admin-panel hidden">
             <div class="admin-section">
-                <h3 style="color:var(--text-main); border-bottom:1px solid var(--border-color); padding-bottom:10px; margin-top:0;">Настройки плана (Admin)</h3>
-                <div class="input-group"><label>Цель на день (на чел.):</label><input type="number" id="planDaily" onchange="updatePlans()"></div>
-                <div class="input-group"><label>Цель на неделю (на чел.):</label><input type="number" id="planWeekly" onchange="updatePlans()"></div>
+                <h3 style="color:var(--text-main); border-bottom:1px solid var(--border-color); padding-bottom:10px; margin-top:0;">Настройки плана</h3>
+                <div class="input-group"><label>Цель на день:</label><input type="number" id="planDaily" onchange="updatePlans()"></div>
+                <div class="input-group"><label>Цель на неделю:</label><input type="number" id="planWeekly" onchange="updatePlans()"></div>
+            </div>
+            <div class="admin-section" style="border-left: 1px solid var(--border-color); padding-left: 20px;">
+                <h3 style="color:#0078d7; border-bottom:1px solid var(--border-color); padding-bottom:10px; margin-top:0;">Система уведомлений (Всем)</h3>
+                <div class="input-group">
+                    <label>Сообщение:</label>
+                    <textarea id="customNotificationText" rows="2" placeholder="Текст объявления..."></textarea>
+                </div>
+                <div class="input-group">
+                    <label>Ссылка на иконку:</label>
+                    <input type="text" id="customNotificationIcon" placeholder="Опционально">
+                </div>
+                <button class="btn-admin-action" onclick="broadcastCustomAlert()">Отправить всем</button>
+            </div>
+            <div class="admin-section" style="border-left: 1px solid var(--border-color); padding-left: 20px;">
+                <h3 style="color:#27ae60; border-bottom:1px solid var(--border-color); padding-bottom:10px; margin-top:0;">Архив и Экспорт</h3>
+                <button class="btn-admin-action" onclick="exportToCSV()" style="background: linear-gradient(135deg, #107c10, #0b590b); margin-top:5px;">Экспорт отчёта (CSV)</button>
+                <button class="btn-admin-action" onclick="resetWeek()" style="background: linear-gradient(135deg, #d13438, #8a1c24); margin-top:12px;">Сброс недели (Архив)</button>
             </div>
         </div>
     </div>
@@ -306,10 +332,72 @@
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             toast.className = 'toast';
-            toast.innerHTML = `<img src="${imgUrl}" alt="icon"><div>${message}</div>`;
+            const finalImg = imgUrl || 'https://i.imgur.com/92aAKxU.png';
+            toast.innerHTML = `<img src="${finalImg}" alt="icon"><div>${message}</div>`;
             container.appendChild(toast);
             notifySound.play().catch(e => console.log("Sound autoplay blocked"));
             setTimeout(() => { toast.style.animation = 'slideOutRight 0.5s forwards'; setTimeout(() => toast.remove(), 500); }, 8000);
+        }
+
+        async function broadcastCustomAlert() {
+            const text = document.getElementById('customNotificationText').value.trim();
+            const icon = document.getElementById('customNotificationIcon').value.trim();
+            if(!text) { alert("Введите текст уведомления!"); return; }
+
+            const payloadObj = { message: text, img: icon || null, ts: Date.now() };
+            const { error } = await db.from('global_metrics').update({ custom_alert: payloadObj }).eq('id', 1);
+            
+            if(!error) {
+                document.getElementById('customNotificationText').value = '';
+                document.getElementById('customNotificationIcon').value = '';
+            } else {
+                alert("Ошибка отправки: " + error.message);
+            }
+        }
+
+        function exportToCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
+            csvContent += "Имя;ПН;ВТ;СР;ЧТ;ПТ;СБ;Итого;Пропуски\n";
+            employees.forEach(emp => {
+                let sum = emp.days.reduce((a,b)=>a+b,0);
+                let absences = emp.attendance.filter(a => a === 3).length;
+                csvContent += `${emp.name};${emp.days.join(';')};${sum};${absences}\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `TIGR_CRM_Report_${new Date().toLocaleDateString()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        async function resetWeek() {
+            if(!isAdmin) return;
+            const pin = prompt("ВНИМАНИЕ! Для архивации и сброса недели введите PIN инженера (0402):");
+            if(pin !== "0402") { alert("Отказано в доступе!"); return; }
+            if(!confirm("Вы точно хотите обнулить дни и счетчики городов для всех сотрудников?")) return;
+
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            document.getElementById('loadingOverlay').style.opacity = '1';
+            
+            try {
+                for(let emp of employees) {
+                    await db.from('employees').update({ mon:0, tue:0, wed:0, thu:0, fri:0, sat:0, att_mon:0, att_tue:0, att_wed:0, att_thu:0, att_fri:0, att_sat:0 }).eq('id', emp.id);
+                }
+                const zeroCity = { nikopol: [0,0,0,0,0,0], zv: [0,0,0,0,0,0], kamenka: [0,0,0,0,0,0] };
+                await db.from('global_metrics').update({ total:0, nikopol:0, zv:0, city_days: zeroCity }).eq('id', 1);
+
+                showNotification("Данные недели успешно сброшены в архив!", "https://cdn-icons-png.flaticon.com/512/190/190411.png");
+            } catch(e) {
+                alert("Ошибка: " + e.message);
+            } finally {
+                await loadCloudData();
+                setTimeout(() => {
+                    document.getElementById('loadingOverlay').style.opacity = '0';
+                    setTimeout(() => document.getElementById('loadingOverlay').style.display = 'none', 500);
+                }, 800);
+            }
         }
 
         function checkTimeNotifications() {
@@ -317,9 +405,9 @@
             const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
             const today = now.toDateString();
             const times = {
-                '10:30': { msg: 'Все на перекур!', img: 'https://cdn-icons-png.flaticon.com/512/1055/1055660.png' },
-                '13:20': { msg: 'А как бы шо-то обэда будет, а то там 25 людей не кормленные...', img: 'https://cdn-icons-png.flaticon.com/512/1864/1864514.png' },
-                '16:00': { msg: 'Перерывчик!', img: 'https://cdn-icons-png.flaticon.com/512/1055/1055660.png' }
+                '10:30': { msg: 'Все на перекур!', img: 'https://cataas.com/cat/cute?width=100&time=1' },
+                '13:20': { msg: 'А как бы шо-то обэда будет, а то там 25 людей не кормленные...', img: 'https://cataas.com/cat/eating?width=100&time=1' },
+                '16:00': { msg: 'Перерывчик!', img: 'https://cataas.com/cat/sleep?width=100&time=1' }
             };
             if (times[currentTime] && !localStorage.getItem(`notified_time_${currentTime}_${today}`)) {
                 showNotification(times[currentTime].msg, times[currentTime].img);
@@ -386,6 +474,17 @@
                         let parsed = typeof metrics.city_days === 'string' ? JSON.parse(metrics.city_days) : metrics.city_days;
                         if(parsed.nikopol) cityDays = parsed;
                     } catch(e) { console.error("Parse error:", e); }
+                }
+
+                if (metrics.custom_alert) {
+                    let alertObj = typeof metrics.custom_alert === 'string' ? JSON.parse(metrics.custom_alert) : metrics.custom_alert;
+                    if (alertObj && alertObj.ts) {
+                        const localLastTs = localStorage.getItem('crm_last_alert_ts');
+                        if (String(alertObj.ts) !== localLastTs) {
+                            localStorage.setItem('crm_last_alert_ts', alertObj.ts);
+                            showNotification(alertObj.message, alertObj.img);
+                        }
+                    }
                 }
             }
 
@@ -457,23 +556,21 @@
                 for (let d = 0; d < 6; d++) { daySums[d] += (emp.days[d] || 0); }
                 
                 if (totalData >= 5 && !localStorage.getItem(`evt_5_${emp.id}_${today}`)) {
-                    showNotification(`У ${emp.name} уже 5 данных, круто!`, 'https://cdn-icons-png.flaticon.com/512/3573/3573974.png');
+                    showNotification(`У ${emp.name} уже 5 данных, круто!`, 'https://cataas.com/cat/cute?width=100&time=' + Date.now());
                     localStorage.setItem(`evt_5_${emp.id}_${today}`, 'true');
                 }
                 if (totalData >= 10 && !localStorage.getItem(`evt_10_${emp.id}_${today}`)) {
-                    showNotification(`У ${emp.name} уже 10 данных, вот это нифига себе!!!`, 'https://cdn-icons-png.flaticon.com/512/1055/1055684.png');
+                    showNotification(`У ${emp.name} уже 10 данных, вот это нифига себе!!!`, 'https://cataas.com/cat/cute?width=100&time=' + (Date.now()+1));
                     localStorage.setItem(`evt_10_${emp.id}_${today}`, 'true');
                 }
                 
                 let percent = (totalData / (metricsData.weekly_plan || 130)) * 100;
                 let tlClass = percent >= 100 ? 'tl-green' : (percent >= 75 ? 'tl-yellow' : 'tl-red');
 
-                // Формируем кружок аватара
                 let avatarHtml = emp.avatar_url 
                     ? `<img src="${emp.avatar_url}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid ${emp.personal_color};">`
                     : `<div style="width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--input-bg); border: 2px solid ${emp.personal_color}; font-size: 13px;">${emp.name.charAt(0)}</div>`;
 
-                // Строка данных (реестр)
                 let trData = document.createElement('tr');
                 trData.innerHTML = `<td style="font-weight:700; color: ${emp.personal_color}; text-shadow: 0 0 8px ${emp.personal_color}40; display: flex; align-items: center; gap: 12px; padding: 8px 6px;">
                         ${avatarHtml}
@@ -483,7 +580,6 @@
                     `<td><div class="traffic-light ${tlClass}" title="${Math.round(percent)}% от плана"></div></td><td style="font-weight:900;color:#107c10;">${totalData}</td>`;
                 tBodyData.appendChild(trData);
 
-                // Строка посещаемости
                 let trAtt = document.createElement('tr');
                 let attHtml = `<td style="font-weight:700; color: ${emp.personal_color}; display: flex; align-items: center; gap: 12px; padding: 8px 6px;">
                         ${avatarHtml}
@@ -528,7 +624,7 @@
             document.getElementById('statPlanTotal').innerText = employees.length * (metricsData.weekly_plan || 130);
 
             if (currentGlobalSum >= 50 && !localStorage.getItem(`evt_global_50_${today}`)) {
-                showNotification(`Достигнуто общее 50 кол-во данных за день!`, 'https://cdn-icons-png.flaticon.com/512/3573/3573977.png');
+                showNotification(`Достигнуто общее 50 кол-во данных за день!`, 'https://cataas.com/cat/cute?width=100&time=' + (Date.now()+2));
                 localStorage.setItem(`evt_global_50_${today}`, 'true');
             }
 
@@ -647,6 +743,12 @@
             }
             
             await loadCloudData(); 
+            setTimeout(() => {
+                const overlay = document.getElementById('loadingOverlay');
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.style.display = 'none', 500);
+            }, 800);
+
             setInterval(checkTimeNotifications, 30000);
             
             db.channel('realtime-sync')
