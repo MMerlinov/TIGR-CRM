@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>TIGER CRM | Настройки профиля</title>
+    <link rel="icon" type="image/png" href="https://i.imgur.com/92aAKxU.png">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -24,6 +25,9 @@
             --input-border: #cccccc; 
         }
         body { margin: 0; padding: 20px; font-family: 'Segoe UI', Tahoma, sans-serif; background: linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2)); min-height: 100vh; display: flex; align-items: center; justify-content: center; color: var(--text-main); transition: all 0.3s ease; }
+        
+        @keyframes pulse { 0% { transform: scale(0.9); opacity: 0.7; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(0.9); opacity: 0.7; } }
+        
         .profile-container { display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 500px; box-sizing: border-box; }
         .profile-card { background: var(--panel-bg); backdrop-filter: blur(25px); border: 1px solid var(--border-color); border-radius: 24px; padding: 35px; width: 100%; box-shadow: 0 15px 45px rgba(0,0,0,0.6); box-sizing: border-box; }
         
@@ -31,7 +35,7 @@
         .form-group { margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px; }
         label { font-size: 0.85rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
         
-        input[type="text"], input[type="number"] { padding: 12px 14px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: 12px; font-size: 1rem; transition: 0.3s; width: 100%; box-sizing: border-box; }
+        input[type="text"], input[type="number"], input[type="password"] { padding: 12px 14px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: 12px; font-size: 1rem; transition: 0.3s; width: 100%; box-sizing: border-box; }
         input:focus { outline: none; border-color: #0078d7; box-shadow: 0 0 10px rgba(0,120,215,0.4); background: rgba(0,0,0,0.3); }
         input[type="file"] { color: var(--text-muted); font-size: 0.9rem; width: 100%; box-sizing: border-box; }
         input[type="color"] { cursor: pointer; border: none; border-radius: 8px; background: transparent; padding: 0; height: 44px; width: 100%; transition: transform 0.2s; }
@@ -55,12 +59,21 @@
         
         .status-msg { font-size: 0.95rem; text-align: center; margin-top: 15px; font-weight: 600; min-height: 22px; transition: 0.3s; }
         .section-title { color: #0078d7; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-top: 35px; margin-bottom: 18px; font-size: 1rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .admin-pin-block { background: rgba(209, 52, 56, 0.1); border: 1px solid rgba(209, 52, 56, 0.3); padding: 15px; border-radius: 12px; margin-top: 25px; display: none; }
     </style>
 </head>
 <body>
+    <div id="loadingOverlay" style="display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2)); z-index:9999; justify-content:center; align-items:center; flex-direction:column; transition: opacity 0.5s ease; backdrop-filter:blur(10px);">
+        <img src="https://i.imgur.com/92aAKxU.png" style="width:80px; animation: pulse 1.5s infinite; filter: drop-shadow(0 0 15px rgba(0,120,215,0.6));">
+        <h3 style="color:#0078d7; font-family:'Montserrat', sans-serif; margin-top:20px;">Загрузка профиля...</h3>
+    </div>
 
     <div class="profile-container">
         <div class="profile-card">
+            <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+                <img src="https://i.imgur.com/92aAKxU.png" alt="Logo" style="height: 50px;">
+            </div>
             <h2>Профиль сотрудника</h2>
             
             <div class="avatar-container">
@@ -81,7 +94,7 @@
                 <label>Твой цвет (видно всем)</label>
                 <div style="display: flex; gap: 15px; align-items: center;">
                     <input type="color" id="personalColor" value="#0078d7" style="width: 60px; height: 50px;">
-                    <span style="font-size: 0.85rem; color: var(--text-muted);">Этот цвет выделит тебя в глобальном рейтинге и графиках.</span>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">Этот цвет выделит тебя в глобальном рейтинге.</span>
                 </div>
             </div>
 
@@ -101,6 +114,12 @@
                 <input type="number" id="day_thu" placeholder="ЧТ" title="Четверг">
                 <input type="number" id="day_fri" placeholder="ПТ" title="Пятница">
                 <input type="number" id="day_sat" placeholder="СБ" title="Суббота">
+            </div>
+
+            <div id="adminPinBlock" class="admin-pin-block">
+                <h3 style="color: #d13438; font-size: 1rem; margin-top: 0; margin-bottom: 10px;">🛡️ Панель Администратора</h3>
+                <label style="color: var(--text-main);">Сохранить PIN-код админа (применится ко всем правкам автоматически)</label>
+                <input type="password" id="savedAdminPin" placeholder="Введите 0402" style="margin-top: 8px; text-align: center; letter-spacing: 5px; font-weight: bold;" oninput="saveAdminPinLocally()">
             </div>
 
             <button id="saveBtn" class="btn-save" onclick="saveProfile()">Сохранить изменения</button>
@@ -123,12 +142,17 @@
         let base64AvatarString = ""; 
         let currentEmployeeId = null;
         let compareChartInst = null;
+        let originalDays = [0, 0, 0, 0, 0, 0]; 
 
         if (localStorage.getItem('crm_theme') === 'light') { document.documentElement.setAttribute('data-theme', 'light'); }
 
         function previewTheme() {
             document.body.style.background = `linear-gradient(135deg, ${document.getElementById('themeBg1').value}, ${document.getElementById('themeBg2').value})`;
             document.body.style.color = document.getElementById('themeText').value;
+        }
+
+        function saveAdminPinLocally() {
+            localStorage.setItem('crm_saved_admin_pin', document.getElementById('savedAdminPin').value);
         }
 
         document.getElementById('avatarFile').addEventListener('change', function(e) {
@@ -155,21 +179,28 @@
         async function loadProfileData() {
             if (!currentUsername) { window.location.href = 'login.html'; return; }
             
+            if (localStorage.getItem('crm_role') === 'admin') {
+                document.getElementById('adminPinBlock').style.display = 'block';
+                document.getElementById('savedAdminPin').value = localStorage.getItem('crm_saved_admin_pin') || '';
+            }
+
             let { data: allEmp } = await db.from('employees').select('*');
             let { data: emp } = await db.from('employees').select('*').eq('name', currentUsername).maybeSingle();
             
-            let myDays = [0,0,0,0,0,0];
             let personalColor = '#0078d7';
 
             if (emp) {
                 currentEmployeeId = emp.id;
                 document.getElementById('empName').value = emp.name || '';
-                document.getElementById('day_mon').value = emp.mon || 0;
-                document.getElementById('day_tue').value = emp.tue || 0;
-                document.getElementById('day_wed').value = emp.wed || 0;
-                document.getElementById('day_thu').value = emp.thu || 0;
-                document.getElementById('day_fri').value = emp.fri || 0;
-                document.getElementById('day_sat').value = emp.sat || 0;
+                
+                originalDays = [emp.mon||0, emp.tue||0, emp.wed||0, emp.thu||0, emp.fri||0, emp.sat||0];
+                
+                document.getElementById('day_mon').value = originalDays[0];
+                document.getElementById('day_tue').value = originalDays[1];
+                document.getElementById('day_wed').value = originalDays[2];
+                document.getElementById('day_thu').value = originalDays[3];
+                document.getElementById('day_fri').value = originalDays[4];
+                document.getElementById('day_sat').value = originalDays[5];
                 
                 document.getElementById('personalColor').value = emp.personal_color || '#0078d7';
                 personalColor = emp.personal_color || '#0078d7';
@@ -182,8 +213,6 @@
                     document.getElementById('themePanel').value = theme.panelBg || 'rgba(30, 30, 35, 0.75)';
                     previewTheme();
                 }
-                
-                myDays = [emp.mon||0, emp.tue||0, emp.wed||0, emp.thu||0, emp.fri||0, emp.sat||0];
 
                 if (emp.avatar_url) {
                     base64AvatarString = emp.avatar_url;
@@ -193,7 +222,13 @@
                 }
             } else { document.getElementById('empName').value = currentUsername; }
 
-            generateCompareChart(myDays, allEmp || [], personalColor);
+            generateCompareChart(originalDays, allEmp || [], personalColor);
+
+            setTimeout(() => {
+                const overlay = document.getElementById('loadingOverlay');
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.style.display = 'none', 500);
+            }, 600);
         }
 
         function generateCompareChart(myDays, allEmployees, myColor) {
@@ -233,19 +268,34 @@
         }
 
         async function saveProfile() {
-            const pass = prompt("Запрос разрешения администратора. Введите пароль для внесения изменений:");
-            if (pass !== "0402") {
-                const msgEl = document.getElementById('statusMsg');
-                msgEl.style.color = '#ff4d4d';
-                msgEl.innerText = "Отказано в доступе: Неверный пароль администратора.";
-                return;
-            }
-
             const msgEl = document.getElementById('statusMsg');
             const btn = document.getElementById('saveBtn');
             const name = document.getElementById('empName').value.trim();
             
             if(!name) { msgEl.style.color = '#ff4d4d'; msgEl.innerText = "Имя не может быть пустым!"; return; }
+
+            const newDays = [
+                parseInt(document.getElementById('day_mon').value) || 0,
+                parseInt(document.getElementById('day_tue').value) || 0,
+                parseInt(document.getElementById('day_wed').value) || 0,
+                parseInt(document.getElementById('day_thu').value) || 0,
+                parseInt(document.getElementById('day_fri').value) || 0,
+                parseInt(document.getElementById('day_sat').value) || 0
+            ];
+            
+            const daysChanged = originalDays.some((val, index) => val !== newDays[index]);
+
+            if (daysChanged) {
+                const savedPin = localStorage.getItem('crm_saved_admin_pin');
+                if (savedPin !== "0402") {
+                    const pass = prompt("Вы изменяете данные по дням. Запрос разрешения администратора. Введите пароль:");
+                    if (pass !== "0402") {
+                        msgEl.style.color = '#ff4d4d';
+                        msgEl.innerText = "Отказано в доступе: Неверный пароль администратора для изменения дней.";
+                        return;
+                    }
+                }
+            }
 
             btn.disabled = true;
             btn.innerText = "Синхронизация...";
@@ -261,12 +311,8 @@
 
             const payload = {
                 name: name,
-                mon: parseInt(document.getElementById('day_mon').value) || 0,
-                tue: parseInt(document.getElementById('day_tue').value) || 0,
-                wed: parseInt(document.getElementById('day_wed').value) || 0,
-                thu: parseInt(document.getElementById('day_thu').value) || 0,
-                fri: parseInt(document.getElementById('day_fri').value) || 0,
-                sat: parseInt(document.getElementById('day_sat').value) || 0,
+                mon: newDays[0], tue: newDays[1], wed: newDays[2], 
+                thu: newDays[3], fri: newDays[4], sat: newDays[5],
                 avatar_url: base64AvatarString,
                 personal_color: document.getElementById('personalColor').value,
                 custom_theme: themeSettings
@@ -279,7 +325,6 @@
             if (currentEmployeeId) {
                 result = await db.from('employees').update(payload).eq('id', currentEmployeeId);
             } else {
-                // РЕШЕНИЕ ОШИБКИ: Вычисляем максимальный id перед вставкой, чтобы избежать ошибки Not-Null Constraint
                 const { data: maxEmp } = await db.from('employees').select('id').order('id', { ascending: false }).limit(1).maybeSingle();
                 const nextId = maxEmp ? maxEmp.id + 1 : 1;
                 payload.id = nextId;
