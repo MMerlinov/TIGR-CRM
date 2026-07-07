@@ -140,7 +140,35 @@
         [data-theme="light"] .toast { background: rgba(255, 255, 255, 0.96); color: #111; border-top: 1px solid rgba(0,0,0,0.05); }
         .toast img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
         
-        @keyframes slideInRight { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* Премиальный контейнер для графика распределения */
+        .global-chart-wrapper {
+            position: relative;
+            background: rgba(25, 25, 30, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+            overflow: hidden;
+        }
+
+        .global-chart-wrapper:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 50px rgba(0, 192, 239, 0.15);
+            border-color: rgba(0, 192, 239, 0.3);
+        }
+
+        /* Эффект свечения для самого Canvas */
+        #globalChart {
+            filter: drop-shadow(0 0 8px rgba(0, 192, 239, 0.2));
+            transition: filter 0.3s ease;
+        }
+        
+        @keyframes slideInRight {
+ from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes slideOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(120%); opacity: 0; } }
         .chart-container-semi { position: relative; height: 185px; width: 100%; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 5px; box-sizing: border-box; }
     </style>
@@ -219,7 +247,7 @@
             <div class="col-right">
                 <div class="panel">
                     <h3 class="panel-title" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 15px;">Глобальное распределение</h3>
-                    <div class="chart-container-semi"><canvas id="globalChart"></canvas></div>
+                    <div class="global-chart-wrapper" style="height: 280px;"><canvas id="globalChart"></canvas></div>
                     
                     <div class="global-totals-block">
                         <div class="gt-item">
@@ -481,7 +509,16 @@
             localStorage.setItem('crm_theme', newTheme);
             document.getElementById('themeToggle').innerText = newTheme === 'dark' ? '☀️' : '🌙';
             
-            if (globalChartInst) { globalChartInst.options.plugins.legend.labels.color = newTheme === 'dark' ? '#aaaaaa' : '#555555'; globalChartInst.update(); }
+            if (globalChartInst && globalChartInst.config.type === 'bar') {
+                const isDark = newTheme === 'dark';
+                globalChartInst.options.scales.x.ticks.color = isDark ? '#aaaaaa' : '#555555';
+                globalChartInst.options.scales.y.ticks.color = isDark ? '#aaaaaa' : '#555555';
+                globalChartInst.options.scales.x.grid.color = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+                globalChartInst.update();
+            } else if (globalChartInst) { 
+                globalChartInst.options.plugins.legend.labels.color = newTheme === 'dark' ? '#aaaaaa' : '#555555'; 
+                globalChartInst.update(); 
+            }
             if (companyDaysChartInst) { 
                 companyDaysChartInst.options.plugins.legend.labels.color = newTheme === 'dark' ? '#aaaaaa' : '#555555';
                 companyDaysChartInst.options.scales.x.ticks.color = newTheme === 'dark' ? '#aaaaaa' : '#555555';
@@ -719,7 +756,96 @@
             await db.from('employees').update({ [keys[dIdx]]: next }).eq('id', employees[eIdx].id);
         }
 
+
+        function createLeaderboardDistributionChart(canvasId, labels, dataValues, isDarkTheme = true) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const textModeColor = isDarkTheme ? '#e0e0e6' : '#2b2b30';
+            const gridModeColor = isDarkTheme ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.05)';
+
+            // Защита от конфликтов Chart.js: уничтожаем прошлый инстанс
+            if (globalChartInst instanceof Chart) {
+                globalChartInst.destroy();
+            }
+
+            // Создание продвинутых горизонтальных градиентов
+            const generateHorizontalGradient = (cStart, cEnd) => {
+                const grad = ctx.createLinearGradient(0, 0, canvas.width || 500, 0);
+                grad.addColorStop(0, cStart);
+                grad.addColorStop(1, cEnd);
+                return grad;
+            };
+
+            const gradient1 = generateHorizontalGradient('rgba(0, 192, 239, 1)', 'rgba(0, 192, 239, 0.15)');
+            const gradient2 = generateHorizontalGradient('rgba(156, 39, 176, 1)', 'rgba(156, 39, 176, 0.15)');
+            const gradient3 = generateHorizontalGradient('rgba(46, 204, 113, 1)', 'rgba(46, 204, 113, 0.15)');
+
+            globalChartInst = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Активность регионов',
+                        data: dataValues,
+                        backgroundColor: [gradient1, gradient2, gradient3],
+                        borderColor: [
+                            'rgba(0, 192, 239, 1)',
+                            'rgba(156, 39, 176, 1)',
+                            'rgba(46, 204, 113, 1)'
+                        ],
+                        borderWidth: 2,
+                        borderRadius: 10,
+                        borderSkipped: false,
+                        barThickness: 24,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { left: 5, right: 25, top: 5, bottom: 5 } },
+                    animation: {
+                        duration: 1400,
+                        easing: 'easeOutElastic',
+                        delay: (context) => context.dataIndex * 180
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(20, 20, 25, 0.95)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#00c0ef',
+                            borderColor: 'rgba(255, 255, 255, 0.08)',
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: false,
+                            titleFont: { family: "'Montserrat', sans-serif", weight: '700', size: 13 },
+                            bodyFont: { family: "'Montserrat', sans-serif", size: 14, weight: '900' },
+                            callbacks: {
+                                label: function(context) { return ` Выполнено: ${context.parsed.x} ед.`; }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: { color: gridModeColor, drawBorder: false, borderDash: [4, 4] },
+                            ticks: { color: textModeColor, font: { family: "'Montserrat', sans-serif", size: 11 } }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { color: textModeColor, crossAlign: 'start', font: { family: "'Montserrat', sans-serif", weight: '700', size: 13 } }
+                        }
+                    }
+                }
+            });
+        }
+
         function updateCharts(calculatedKamenka) {
+
             try {
                 const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
                 const labelColor = isDark ? '#aaaaaa' : '#555555';
@@ -747,24 +873,9 @@
                     barChartInst.update();
                 }
 
-                const canvasGlobal = document.getElementById('globalChart');
-                if(canvasGlobal) {
-                    if(!globalChartInst) {
-                        globalChartInst = new Chart(canvasGlobal, {
-                            type: 'doughnut', 
-                            data: { 
-                                labels: ['Никополь', 'Жёлтые Воды', 'Каменское'], 
-                                datasets: [{ data: [0, 0, 0], backgroundColor: ['#0078d7', '#f39c12', '#27ae60'], borderWidth: 0, hoverOffset: 5 }] 
-                            },
-                            options: { 
-                                responsive: true, maintainAspectRatio: false, rotation: -90, circumference: 180, cutout: '55%', layout: { padding: { bottom: 10 } },
-                                plugins: { legend: { position: 'bottom', labels: { color: labelColor, boxWidth: 12, padding: 12 } } } 
-                            }
-                        });
-                    }
-                    globalChartInst.data.datasets[0].data = [metricsData.nikopol || 0, metricsData.zv || 0, calculatedKamenka];
-                    globalChartInst.update();
-                }
+                const regions = ['Никополь', 'Жёлтые Воды', 'Каменское'];
+                const metrics = [metricsData.nikopol || 0, metricsData.zv || 0, calculatedKamenka || 0];
+                createLeaderboardDistributionChart('globalChart', regions, metrics, isDark);
 
                 const canvasCompany = document.getElementById('companyDaysChart');
                 if(canvasCompany) {
