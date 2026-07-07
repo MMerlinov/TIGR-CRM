@@ -2,6 +2,8 @@
 <html lang="ru" data-theme="dark">
 <head>
     <meta charset="UTF-8">
+    <!-- Метатег для обхода блокировки 403 Forbidden от внешних хостингов картинок -->
+    <meta name="referrer" content="no-referrer">
     <title>TIGER CRM | Cloud Metro Dashboard</title>
     <link rel="icon" type="image/png" href="https://i.imgur.com/92aAKxU.png">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
@@ -157,7 +159,7 @@
             <div class="header-left">
                 <div class="logo-area">
                     <img src="https://i.imgur.com/92aAKxU.png" class="crm-logo" alt="Tiger CRM Logo">
-                    <h1>TIGER CRM</h1>
+                    <h1>TIGER DASHBOARD</h1>
                 </div>
             </div>
             <div class="header-right">
@@ -265,7 +267,6 @@
             </table>
         </div>
 
-        <!-- Улучшенная Панель Администратора -->
         <div id="adminPanel" class="admin-panel hidden">
             <div class="admin-section">
                 <h3 style="color:var(--text-main); border-bottom:1px solid var(--border-color); padding-bottom:10px; margin-top:0;">Настройки плана</h3>
@@ -286,7 +287,7 @@
             </div>
             <div class="admin-section" style="border-left: 1px solid var(--border-color); padding-left: 20px;">
                 <h3 style="color:#27ae60; border-bottom:1px solid var(--border-color); padding-bottom:10px; margin-top:0;">Архив и Экспорт</h3>
-                <button class="btn-admin-action" onclick="exportToCSV()" style="background: linear-gradient(135deg, #107c10, #0b590b); margin-top:5px;">Экспорт отчёта (CSV)</button>
+                <button class="btn-admin-action" onclick="exportToExcelWithDesign()" style="background: linear-gradient(135deg, #107c10, #0b590b); margin-top:5px;">Экспорт отчёта (Excel)</button>
                 <button class="btn-admin-action" onclick="resetWeek()" style="background: linear-gradient(135deg, #d13438, #8a1c24); margin-top:12px;">Сброс недели (Архив)</button>
             </div>
         </div>
@@ -295,20 +296,22 @@
     <div id="toastContainer"></div>
 
     <script>
-        tsParticles.load("tsparticles", {
-            fpsLimit: 60,
-            particles: {
-                number: { value: 50, density: { enable: true, value_area: 800 } },
-                color: { value: "#0078d7" },
-                shape: { type: "circle" },
-                opacity: { value: 0.25 },
-                size: { value: { min: 1, max: 3 } },
-                links: { enable: true, distance: 150, color: "#0078d7", opacity: 0.18, width: 1 },
-                move: { enable: true, speed: 0.4, direction: "none" }
-            },
-            interactivity: { detectsOn: "canvas", events: { onHover: { enable: true, mode: "grab" }, resize: true }, modes: { grab: { distance: 160, links: { opacity: 0.4 } } } },
-            retina_detect: true
-        });
+        try {
+            tsParticles.load("tsparticles", {
+                fpsLimit: 60,
+                particles: {
+                    number: { value: 50, density: { enable: true, value_area: 800 } },
+                    color: { value: "#0078d7" },
+                    shape: { type: "circle" },
+                    opacity: { value: 0.25 },
+                    size: { value: { min: 1, max: 3 } },
+                    links: { enable: true, distance: 150, color: "#0078d7", opacity: 0.18, width: 1 },
+                    move: { enable: true, speed: 0.4, direction: "none" }
+                },
+                interactivity: { detectsOn: "canvas", events: { onHover: { enable: true, mode: "grab" }, resize: true }, modes: { grab: { distance: 160, links: { opacity: 0.4 } } } },
+                retina_detect: true
+            });
+        } catch(err) { console.warn("Фон загрузится позже", err); }
 
         const SUPABASE_URL = "https://geolvowpvdxnimypcvfx.supabase.co"; 
         const SUPABASE_ANON_KEY = "sb_publishable_NYYVxFGX8ZnVK0CyEFPehg_z58eWBut"; 
@@ -330,12 +333,13 @@
 
         function showNotification(message, imgUrl) {
             const container = document.getElementById('toastContainer');
+            if(!container) return;
             const toast = document.createElement('div');
             toast.className = 'toast';
             const finalImg = imgUrl || 'https://i.imgur.com/92aAKxU.png';
             toast.innerHTML = `<img src="${finalImg}" alt="icon"><div>${message}</div>`;
             container.appendChild(toast);
-            notifySound.play().catch(e => console.log("Sound autoplay blocked"));
+            notifySound.play().catch(e => console.log("Sound blocked"));
             setTimeout(() => { toast.style.animation = 'slideOutRight 0.5s forwards'; setTimeout(() => toast.remove(), 500); }, 8000);
         }
 
@@ -355,18 +359,70 @@
             }
         }
 
-        function exportToCSV() {
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
-            csvContent += "Имя;ПН;ВТ;СР;ЧТ;ПТ;СБ;Итого;Пропуски\n";
+        function exportToExcelWithDesign() {
+            let daySums = [0, 0, 0, 0, 0, 0];
+            let totalAbsences = 0;
+            let currentGlobalSum = 0;
+            let rowsHtml = '';
+
             employees.forEach(emp => {
-                let sum = emp.days.reduce((a,b)=>a+b,0);
+                let sum = emp.days.reduce((a, b) => a + (b || 0), 0);
                 let absences = emp.attendance.filter(a => a === 3).length;
-                csvContent += `${emp.name};${emp.days.join(';')};${sum};${absences}\n`;
+                
+                currentGlobalSum += sum;
+                totalAbsences += absences;
+                for (let d = 0; d < 6; d++) { daySums[d] += (emp.days[d] || 0); }
+
+                const nameColor = emp.personal_color || '#0078d7';
+
+                rowsHtml += `
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid rgba(255,255,255,0.08); font-weight: bold; color: ${nameColor}; background-color: #19191e; text-align: left;">
+                            ${emp.name}
+                        </td>
+                        ${emp.days.map(val => `<td style="padding: 12px; border: 1px solid rgba(255,255,255,0.08); text-align: center; color: #ffffff; background-color: #19191e;">${val || 0}</td>`).join('')}
+                        <td style="padding: 12px; border: 1px solid rgba(255,255,255,0.08); text-align: center; font-weight: bold; color: #107c10; background-color: rgba(16, 124, 16, 0.15);">
+                            ${sum}
+                        </td>
+                        <td style="padding: 12px; border: 1px solid rgba(255,255,255,0.08); text-align: center; font-weight: bold; color: #d13438; background-color: rgba(209, 52, 56, 0.15);">
+                            ${absences}
+                        </td>
+                    </tr>
+                `;
             });
-            const encodedUri = encodeURI(csvContent);
+
+            let htmlContent = `
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+                <head><meta charset="utf-8"></head>
+                <body style="background-color: #050505; padding: 20px;">
+                    <h2 style="color: #0078d7; font-family: 'Montserrat', sans-serif; font-weight: 900; margin-bottom: 20px;">TIGR CRM | ОТЧЕТ ЭКСПОРТА ДАННЫХ</h2>
+                    <table border="1" style="border-color: rgba(255,255,255,0.08);">
+                        <thead>
+                            <tr>
+                                <th style="text-align: left; width: 250px; background-color: #0a0a20; color: #aaaaaa;">Имя</th>
+                                <th style="background-color: #0a0a20; color: #aaaaaa;">ПН</th><th style="background-color: #0a0a20; color: #aaaaaa;">ВТ</th><th style="background-color: #0a0a20; color: #aaaaaa;">СР</th><th style="background-color: #0a0a20; color: #aaaaaa;">ЧТ</th><th style="background-color: #0a0a20; color: #aaaaaa;">ПТ</th><th style="background-color: #0a0a20; color: #aaaaaa;">СБ</th>
+                                <th style="color: #107c10; background-color: #0a0a20;">ОБЩ (ДАННЫЕ)</th>
+                                <th style="color: #d13438; background-color: #0a0a20;">ПРОПУСКИ</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                        <tfoot>
+                            <tr>
+                                <td style="text-align: left; font-weight: 900; color: #ffffff; padding: 14px; border: 1px solid rgba(255,255,255,0.08); background-color: #0a0a20;">ИТОГО ПО КОМПАНИИ:</td>
+                                ${daySums.map(sum => `<td style="font-weight: 900; color: #0078d7; padding: 14px; border: 1px solid rgba(255,255,255,0.08); text-align: center; background-color: #0a0a20;">${sum}</td>`).join('')}
+                                <td style="font-weight: 900; color: #107c10; padding: 14px; border: 1px solid rgba(255,255,255,0.08); text-align: center; background-color: #0a0a20;">${currentGlobalSum}</td>
+                                <td style="font-weight: 900; color: #d13438; padding: 14px; border: 1px solid rgba(255,255,255,0.08); text-align: center; background-color: #0a0a20;">${totalAbsences}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob([htmlContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
             const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `TIGR_CRM_Report_${new Date().toLocaleDateString()}.csv`);
+            link.href = URL.createObjectURL(blob);
+            link.download = `TIGR_CRM_Report_${new Date().toLocaleDateString()}.xls`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -387,16 +443,12 @@
                 }
                 const zeroCity = { nikopol: [0,0,0,0,0,0], zv: [0,0,0,0,0,0], kamenka: [0,0,0,0,0,0] };
                 await db.from('global_metrics').update({ total:0, nikopol:0, zv:0, city_days: zeroCity }).eq('id', 1);
-
                 showNotification("Данные недели успешно сброшены в архив!", "https://cdn-icons-png.flaticon.com/512/190/190411.png");
             } catch(e) {
                 alert("Ошибка: " + e.message);
             } finally {
                 await loadCloudData();
-                setTimeout(() => {
-                    document.getElementById('loadingOverlay').style.opacity = '0';
-                    setTimeout(() => document.getElementById('loadingOverlay').style.display = 'none', 500);
-                }, 800);
+                setTimeout(() => { document.getElementById('loadingOverlay').style.opacity = '0'; setTimeout(() => document.getElementById('loadingOverlay').style.display = 'none', 500); }, 800);
             }
         }
 
@@ -418,7 +470,8 @@
         function initTheme() {
             const savedTheme = localStorage.getItem('crm_theme') || 'dark';
             document.documentElement.setAttribute('data-theme', savedTheme);
-            document.getElementById('themeToggle').innerText = savedTheme === 'dark' ? '☀️' : '🌙';
+            const toggle = document.getElementById('themeToggle');
+            if(toggle) toggle.innerText = savedTheme === 'dark' ? '☀️' : '🌙';
         }
 
         function toggleTheme() {
@@ -445,61 +498,70 @@
         }
 
         function filterTables() {
-            const val = document.getElementById('empSearch').value.toLowerCase();
+            const searchInput = document.getElementById('empSearch');
+            if(!searchInput) return;
+            const val = searchInput.value.toLowerCase();
             const rowsData = document.querySelectorAll('#employeeTableBody tr');
             const rowsAtt = document.querySelectorAll('#attendanceTableBody tr');
             
             rowsData.forEach(row => {
-                const name = row.querySelector('td:nth-child(1)').innerText.toLowerCase();
+                const name = row.querySelector('td:nth-child(1)')?.innerText.toLowerCase() || '';
                 row.style.display = name.includes(val) ? '' : 'none';
             });
             rowsAtt.forEach(row => {
-                const name = row.querySelector('td:nth-child(1)').innerText.toLowerCase();
+                const name = row.querySelector('td:nth-child(1)')?.innerText.toLowerCase() || '';
                 row.style.display = name.includes(val) ? '' : 'none';
             });
         }
 
         async function loadCloudData() {
-            let { data: metrics } = await db.from('global_metrics').select('*').eq('id', 1).single();
-            if (metrics) {
-                metricsData = metrics;
-                document.getElementById('planDaily').value = metrics.daily_plan || 26;
-                document.getElementById('planWeekly').value = metrics.weekly_plan || 130;
-                document.getElementById('gtTotal').value = metrics.total || 0;
-                document.getElementById('gtNk').value = metrics.nikopol || 0;
-                document.getElementById('gtZv').value = metrics.zv || 0;
-                
-                if (metrics.city_days) {
-                    try {
-                        let parsed = typeof metrics.city_days === 'string' ? JSON.parse(metrics.city_days) : metrics.city_days;
-                        if(parsed.nikopol) cityDays = parsed;
-                    } catch(e) { console.error("Parse error:", e); }
-                }
+            try {
+                let { data: metrics } = await db.from('global_metrics').select('*').eq('id', 1).maybeSingle();
+                if (metrics) {
+                    metricsData = metrics;
+                    if(document.getElementById('planDaily')) document.getElementById('planDaily').value = metrics.daily_plan || 26;
+                    if(document.getElementById('planWeekly')) document.getElementById('planWeekly').value = metrics.weekly_plan || 130;
+                    if(document.getElementById('gtTotal')) document.getElementById('gtTotal').value = metrics.total || 0;
+                    if(document.getElementById('gtNk')) document.getElementById('gtNk').value = metrics.nikopol || 0;
+                    if(document.getElementById('gtZv')) document.getElementById('gtZv').value = metrics.zv || 0;
+                    
+                    if (metrics.city_days) {
+                        try {
+                            let parsed = typeof metrics.city_days === 'string' ? JSON.parse(metrics.city_days) : metrics.city_days;
+                            if(parsed && parsed.nikopol) cityDays = parsed;
+                        } catch(e) { console.warn("City parse error:", e); }
+                    }
 
-                if (metrics.custom_alert) {
-                    let alertObj = typeof metrics.custom_alert === 'string' ? JSON.parse(metrics.custom_alert) : metrics.custom_alert;
-                    if (alertObj && alertObj.ts) {
-                        const localLastTs = localStorage.getItem('crm_last_alert_ts');
-                        if (String(alertObj.ts) !== localLastTs) {
-                            localStorage.setItem('crm_last_alert_ts', alertObj.ts);
-                            showNotification(alertObj.message, alertObj.img);
-                        }
+                    if (metrics.custom_alert) {
+                        try {
+                            let alertObj = typeof metrics.custom_alert === 'string' ? JSON.parse(metrics.custom_alert) : metrics.custom_alert;
+                            if (alertObj && alertObj.ts) {
+                                const localLastTs = localStorage.getItem('crm_last_alert_ts');
+                                if (String(alertObj.ts) !== localLastTs) {
+                                    localStorage.setItem('crm_last_alert_ts', alertObj.ts);
+                                    showNotification(alertObj.message, alertObj.img);
+                                }
+                            }
+                        } catch(e) { console.warn("Alert parse error", e); }
                     }
                 }
-            }
 
-            let { data: dbEmployees } = await db.from('employees').select('*').order('created_at', { ascending: true });
-            if (dbEmployees) {
-                employees = dbEmployees.map(emp => ({
-                    id: emp.id, 
-                    name: emp.name, 
-                    personal_color: emp.personal_color || '#0078d7',
-                    avatar_url: emp.avatar_url,
-                    days: [emp.mon, emp.tue, emp.wed, emp.thu, emp.fri, emp.sat],
-                    attendance: [emp.att_mon, emp.att_tue, emp.att_wed, emp.att_thu, emp.att_fri, emp.att_sat]
-                }));
+                let { data: dbEmployees } = await db.from('employees').select('*').order('created_at', { ascending: true });
+                if (dbEmployees) {
+                    employees = dbEmployees.map(emp => ({
+                        id: emp.id, 
+                        name: emp.name || 'Неизвестно', 
+                        personal_color: emp.personal_color || '#0078d7',
+                        avatar_url: emp.avatar_url,
+                        days: [emp.mon||0, emp.tue||0, emp.wed||0, emp.thu||0, emp.fri||0, emp.sat||0],
+                        attendance: [emp.att_mon||0, emp.att_tue||0, emp.att_wed||0, emp.att_thu||0, emp.att_fri||0, emp.att_sat||0]
+                    }));
+                }
+                renderAll();
+            } catch(err) {
+                console.error("Critical error in loadCloudData:", err);
+                throw err;
             }
-            renderAll();
         }
 
         async function updatePlans() {
@@ -534,15 +596,18 @@
             const tBodyAtt = document.getElementById('attendanceTableBody');
             const tBodyCity = document.getElementById('cityTableBody');
             
-            tBodyData.innerHTML = ''; tFootData.innerHTML = ''; tBodyAtt.innerHTML = ''; tBodyCity.innerHTML = '';
+            if(tBodyData) tBodyData.innerHTML = ''; 
+            if(tFootData) tFootData.innerHTML = ''; 
+            if(tBodyAtt) tBodyAtt.innerHTML = ''; 
+            if(tBodyCity) tBodyCity.innerHTML = '';
             
-            document.getElementById('gtTotal').disabled = !isAdmin;
-            document.getElementById('gtNk').disabled = !isAdmin;
-            document.getElementById('gtZv').disabled = !isAdmin;
+            if(document.getElementById('gtTotal')) document.getElementById('gtTotal').disabled = !isAdmin;
+            if(document.getElementById('gtNk')) document.getElementById('gtNk').disabled = !isAdmin;
+            if(document.getElementById('gtZv')) document.getElementById('gtZv').disabled = !isAdmin;
             
             let calcKam = (metricsData.total || 0) - ((metricsData.nikopol || 0) + (metricsData.zv || 0));
             if(calcKam < 0) calcKam = 0;
-            document.getElementById('gtKam').innerText = calcKam;
+            if(document.getElementById('gtKam')) document.getElementById('gtKam').innerText = calcKam;
             
             let totalAbsences = 0; let currentGlobalSum = 0; let daySums = [0, 0, 0, 0, 0, 0]; 
             const today = new Date().toDateString();
@@ -578,7 +643,7 @@
                     </td>` + 
                     emp.days.map((val, dIdx) => `<td><input type="number" class="cell-input" value="${val||0}" onchange="updateEmpDay(${index}, ${dIdx}, this.value)" ${disabledAttr}></td>`).join('') +
                     `<td><div class="traffic-light ${tlClass}" title="${Math.round(percent)}% от плана"></div></td><td style="font-weight:900;color:#107c10;">${totalData}</td>`;
-                tBodyData.appendChild(trData);
+                if(tBodyData) tBodyData.appendChild(trData);
 
                 let trAtt = document.createElement('tr');
                 let attHtml = `<td style="font-weight:700; color: ${emp.personal_color}; display: flex; align-items: center; gap: 12px; padding: 8px 6px;">
@@ -591,16 +656,18 @@
                     attHtml += `<td><div class="att-cell att-${st||0} ${interactive}" ${onClick}></div></td>`;
                 });
                 trAtt.innerHTML = attHtml;
-                tBodyAtt.appendChild(trAtt);
+                if(tBodyAtt) tBodyAtt.appendChild(trAtt);
             });
 
-            let trFoot = document.createElement('tr');
-            trFoot.style.background = 'rgba(0, 120, 215, 0.06)';
-            let footHtml = `<td style="text-align:left; color:var(--text-main); font-weight:900; padding-left:5px;">ИТОГО:</td>`;
-            for(let d = 0; d < 6; d++) { footHtml += `<td style="color:#0078d7; font-weight:900; font-size:1rem;">${daySums[d]}</td>`; }
-            footHtml += `<td></td><td style="color:#107c10; font-weight:900; font-size:1.1rem;">${currentGlobalSum}</td>`;
-            trFoot.innerHTML = footHtml;
-            tFootData.appendChild(trFoot);
+            if(tFootData) {
+                let trFoot = document.createElement('tr');
+                trFoot.style.background = 'rgba(0, 120, 215, 0.06)';
+                let footHtml = `<td style="text-align:left; color:var(--text-main); font-weight:900; padding-left:5px;">ИТОГО:</td>`;
+                for(let d = 0; d < 6; d++) { footHtml += `<td style="color:#0078d7; font-weight:900; font-size:1rem;">${daySums[d]}</td>`; }
+                footHtml += `<td></td><td style="color:#107c10; font-weight:900; font-size:1.1rem;">${currentGlobalSum}</td>`;
+                trFoot.innerHTML = footHtml;
+                tFootData.appendChild(trFoot);
+            }
 
             const citiesConf = [
                 { id: 'nikopol', name: 'Никополь', color: '#0078d7' },
@@ -608,20 +675,22 @@
                 { id: 'kamenka', name: 'Каменское', color: '#27ae60' }
             ];
             
-            citiesConf.forEach(city => {
-                let days = cityDays[city.id] || [0,0,0,0,0,0];
-                let sum = days.reduce((a,b)=>a+b, 0);
-                let tr = document.createElement('tr');
-                tr.innerHTML = `<td style="font-weight:900; color:${city.color}; text-align:left;">${city.name}</td>` + 
-                    days.map((val, idx) => `<td><input type="number" class="cell-input" value="${val}" onchange="updateCityDay('${city.id}', ${idx}, this.value)" ${!isAdmin ? 'disabled' : ''}></td>`).join('') +
-                    `<td style="font-weight:900; color:${city.color}; font-size:1.1rem;">${sum}</td>`;
-                tBodyCity.appendChild(tr);
-            });
+            if(tBodyCity) {
+                citiesConf.forEach(city => {
+                    let days = cityDays[city.id] || [0,0,0,0,0,0];
+                    let sum = days.reduce((a,b)=>a+b, 0);
+                    let tr = document.createElement('tr');
+                    tr.innerHTML = `<td style="font-weight:900; color:${city.color}; text-align:left;">${city.name}</td>` + 
+                        days.map((val, idx) => `<td><input type="number" class="cell-input" value="${val}" onchange="updateCityDay('${city.id}', ${idx}, this.value)" ${!isAdmin ? 'disabled' : ''}></td>`).join('') +
+                        `<td style="font-weight:900; color:${city.color}; font-size:1.1rem;">${sum}</td>`;
+                    tBodyCity.appendChild(tr);
+                });
+            }
 
-            document.getElementById('statTodayTotal').innerText = metricsData.total || 0;
-            document.getElementById('statCount').innerText = employees.length;
-            document.getElementById('statAbsences').innerText = totalAbsences;
-            document.getElementById('statPlanTotal').innerText = employees.length * (metricsData.weekly_plan || 130);
+            if(document.getElementById('statTodayTotal')) document.getElementById('statTodayTotal').innerText = metricsData.total || 0;
+            if(document.getElementById('statCount')) document.getElementById('statCount').innerText = employees.length;
+            if(document.getElementById('statAbsences')) document.getElementById('statAbsences').innerText = totalAbsences;
+            if(document.getElementById('statPlanTotal')) document.getElementById('statPlanTotal').innerText = employees.length * (metricsData.weekly_plan || 130);
 
             if (currentGlobalSum >= 50 && !localStorage.getItem(`evt_global_50_${today}`)) {
                 showNotification(`Достигнуто общее 50 кол-во данных за день!`, 'https://cataas.com/cat/cute?width=100&time=' + (Date.now()+2));
@@ -651,114 +720,140 @@
         }
 
         function updateCharts(calculatedKamenka) {
-            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            const labelColor = isDark ? '#aaaaaa' : '#555555';
-            const chartCtx = document.getElementById('barChart').getContext('2d');
-
-            if(!barChartInst) {
-                barChartInst = new Chart(chartCtx, {
-                    type: 'bar', 
-                    data: { labels: [], datasets: [{ label: 'Объем', data: [], borderRadius: 6, borderWidth: 1 }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: labelColor } }, y: { ticks: { color: labelColor } } } }
-                });
-            }
-            barChartInst.data.labels = employees.map(e => e.name.split(' ')[0]);
-            barChartInst.data.datasets[0].data = employees.map(e => e.days.reduce((a,b)=>a+b,0));
-
-            barChartInst.data.datasets[0].backgroundColor = employees.map(emp => {
-                let grad = chartCtx.createLinearGradient(0, 0, 0, 200); 
-                grad.addColorStop(0, emp.personal_color); 
-                grad.addColorStop(1, isDark ? 'rgba(15, 15, 20, 0.9)' : 'rgba(245, 245, 245, 0.9)'); 
-                return grad;
-            });
-            barChartInst.data.datasets[0].borderColor = employees.map(emp => emp.personal_color);
-            barChartInst.update();
-
-            if(!globalChartInst) {
-                globalChartInst = new Chart(document.getElementById('globalChart'), {
-                    type: 'doughnut', 
-                    data: { 
-                        labels: ['Никополь', 'Жёлтые Воды', 'Каменское'], 
-                        datasets: [{ data: [0, 0, 0], backgroundColor: ['#0078d7', '#f39c12', '#27ae60'], borderWidth: 0, hoverOffset: 5 }] 
-                    },
-                    options: { 
-                        responsive: true, maintainAspectRatio: false, rotation: -90, circumference: 180, 
-                        cutout: '55%',
-                        layout: { padding: { bottom: 10 } },
-                        plugins: { legend: { position: 'bottom', labels: { color: labelColor, boxWidth: 12, padding: 12 } } } 
+            try {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                const labelColor = isDark ? '#aaaaaa' : '#555555';
+                
+                const canvasBar = document.getElementById('barChart');
+                if(canvasBar) {
+                    const chartCtx = canvasBar.getContext('2d');
+                    if(!barChartInst) {
+                        barChartInst = new Chart(chartCtx, {
+                            type: 'bar', 
+                            data: { labels: [], datasets: [{ label: 'Объем', data: [], borderRadius: 6, borderWidth: 1 }] },
+                            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: labelColor } }, y: { ticks: { color: labelColor } } } }
+                        });
                     }
-                });
-            }
-            
-            globalChartInst.data.datasets[0].data = [metricsData.nikopol || 0, metricsData.zv || 0, calculatedKamenka];
-            globalChartInst.update();
+                    barChartInst.data.labels = employees.map(e => (e.name || 'Юзер').split(' ')[0]);
+                    barChartInst.data.datasets[0].data = employees.map(e => e.days.reduce((a,b)=>a+b,0));
 
-            if(!companyDaysChartInst) {
-                companyDaysChartInst = new Chart(document.getElementById('companyDaysChart'), {
-                    type: 'line',
-                    data: {
-                        labels: ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ'],
-                        datasets: [
-                            { label: 'Никополь', data: cityDays.nikopol, borderColor: '#0078d7', backgroundColor: 'rgba(0, 120, 215, 0.08)', borderWidth: 3, tension: 0.35, fill: true, pointRadius: 4 },
-                            { label: 'Жёлтые Воды', data: cityDays.zv, borderColor: '#f39c12', backgroundColor: 'rgba(243, 156, 18, 0.08)', borderWidth: 3, tension: 0.35, fill: true, pointRadius: 4 },
-                            { label: 'Каменское', data: cityDays.kamenka, borderColor: '#27ae60', backgroundColor: 'rgba(39, 174, 96, 0.08)', borderWidth: 3, tension: 0.35, fill: true, pointRadius: 4 }
-                        ]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { display: true, position: 'top', labels: { color: labelColor, usePointStyle: true, boxWidth: 8 } } },
-                        scales: { x: { ticks: { color: labelColor }, grid: { display: false } }, y: { ticks: { color: labelColor }, grid: { color: 'rgba(128,128,128,0.08)' } } }
+                    barChartInst.data.datasets[0].backgroundColor = employees.map(emp => {
+                        let grad = chartCtx.createLinearGradient(0, 0, 0, 200); 
+                        grad.addColorStop(0, emp.personal_color); 
+                        grad.addColorStop(1, isDark ? 'rgba(15, 15, 20, 0.9)' : 'rgba(245, 245, 245, 0.9)'); 
+                        return grad;
+                    });
+                    barChartInst.data.datasets[0].borderColor = employees.map(emp => emp.personal_color);
+                    barChartInst.update();
+                }
+
+                const canvasGlobal = document.getElementById('globalChart');
+                if(canvasGlobal) {
+                    if(!globalChartInst) {
+                        globalChartInst = new Chart(canvasGlobal, {
+                            type: 'doughnut', 
+                            data: { 
+                                labels: ['Никополь', 'Жёлтые Воды', 'Каменское'], 
+                                datasets: [{ data: [0, 0, 0], backgroundColor: ['#0078d7', '#f39c12', '#27ae60'], borderWidth: 0, hoverOffset: 5 }] 
+                            },
+                            options: { 
+                                responsive: true, maintainAspectRatio: false, rotation: -90, circumference: 180, cutout: '55%', layout: { padding: { bottom: 10 } },
+                                plugins: { legend: { position: 'bottom', labels: { color: labelColor, boxWidth: 12, padding: 12 } } } 
+                            }
+                        });
                     }
-                });
-            } else {
-                companyDaysChartInst.data.datasets[0].data = cityDays.nikopol;
-                companyDaysChartInst.data.datasets[1].data = cityDays.zv;
-                companyDaysChartInst.data.datasets[2].data = cityDays.kamenka;
-                companyDaysChartInst.update();
-            }
+                    globalChartInst.data.datasets[0].data = [metricsData.nikopol || 0, metricsData.zv || 0, calculatedKamenka];
+                    globalChartInst.update();
+                }
+
+                const canvasCompany = document.getElementById('companyDaysChart');
+                if(canvasCompany) {
+                    if(!companyDaysChartInst) {
+                        companyDaysChartInst = new Chart(canvasCompany, {
+                            type: 'line',
+                            data: {
+                                labels: ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ'],
+                                datasets: [
+                                    { label: 'Никополь', data: cityDays.nikopol, borderColor: '#0078d7', backgroundColor: 'rgba(0, 120, 215, 0.08)', borderWidth: 3, tension: 0.35, fill: true, pointRadius: 4 },
+                                    { label: 'Жёлтые Воды', data: cityDays.zv, borderColor: '#f39c12', backgroundColor: 'rgba(243, 156, 18, 0.08)', borderWidth: 3, tension: 0.35, fill: true, pointRadius: 4 },
+                                    { label: 'Каменское', data: cityDays.kamenka, borderColor: '#27ae60', backgroundColor: 'rgba(39, 174, 96, 0.08)', borderWidth: 3, tension: 0.35, fill: true, pointRadius: 4 }
+                                ]
+                            },
+                            options: {
+                                responsive: true, maintainAspectRatio: false,
+                                plugins: { legend: { display: true, position: 'top', labels: { color: labelColor, usePointStyle: true, boxWidth: 8 } } },
+                                scales: { x: { ticks: { color: labelColor }, grid: { display: false } }, y: { ticks: { color: labelColor }, grid: { color: 'rgba(128,128,128,0.08)' } } }
+                            }
+                        });
+                    } else {
+                        companyDaysChartInst.data.datasets[0].data = cityDays.nikopol;
+                        companyDaysChartInst.data.datasets[1].data = cityDays.zv;
+                        companyDaysChartInst.data.datasets[2].data = cityDays.kamenka;
+                        companyDaysChartInst.update();
+                    }
+                }
+            } catch(e) { console.warn("Ошибка отрисовки графиков:", e); }
         }
 
         function logout() { localStorage.removeItem('crm_role'); window.location.href = 'login.html'; }
 
-        window.onload = async () => { 
-            initTheme();
-            if (!localStorage.getItem('crm_role')) { window.location.href = 'login.html'; return; }
-            
-            let currentUsername = localStorage.getItem('crm_username');
-            document.getElementById('displayUsername').innerText = `${currentUsername} [${localStorage.getItem('crm_role').toUpperCase()}]`;
-            isAdmin = localStorage.getItem('crm_role') === 'admin';
-            if (isAdmin) document.getElementById('adminPanel').classList.remove('hidden');
-            
-            let { data: emp } = await db.from('employees').select('avatar_url').eq('name', currentUsername).maybeSingle();
-            if (emp && emp.avatar_url) {
-                const badge = document.querySelector('.user-badge');
-                let img = document.getElementById('headerAvatar');
-                if(!img) {
-                    img = document.createElement('img');
-                    img.id = 'headerAvatar';
-                    img.style = "width:32px; height:32px; border-radius:50%; object-fit:cover; border:2px solid #0078d7; margin-right:5px;";
-                    badge.insertBefore(img, badge.firstChild);
-                }
-                img.src = emp.avatar_url;
-            }
-            
-            await loadCloudData(); 
-            setTimeout(() => {
-                const overlay = document.getElementById('loadingOverlay');
+        function closeLoadingOverlay() {
+            const overlay = document.getElementById('loadingOverlay');
+            if(overlay) {
                 overlay.style.opacity = '0';
                 setTimeout(() => overlay.style.display = 'none', 500);
-            }, 800);
+            }
+        }
+
+        window.onload = async () => { 
+            try {
+                initTheme();
+                if (!localStorage.getItem('crm_role')) { window.location.href = 'login.html'; return; }
+                
+                let currentUsername = localStorage.getItem('crm_username') || 'Гость';
+                const nameDisplay = document.getElementById('displayUsername');
+                if(nameDisplay) nameDisplay.innerText = `${currentUsername} [${(localStorage.getItem('crm_role') || '').toUpperCase()}]`;
+                
+                isAdmin = localStorage.getItem('crm_role') === 'admin';
+                if (isAdmin) {
+                    const adminPnl = document.getElementById('adminPanel');
+                    if(adminPnl) adminPnl.classList.remove('hidden');
+                }
+                
+                try {
+                    let { data: emp } = await db.from('employees').select('avatar_url').eq('name', currentUsername).maybeSingle();
+                    if (emp && emp.avatar_url) {
+                        const badge = document.querySelector('.user-badge');
+                        let img = document.getElementById('headerAvatar');
+                        if(!img && badge) {
+                            img = document.createElement('img');
+                            img.id = 'headerAvatar';
+                            img.style = "width:32px; height:32px; border-radius:50%; object-fit:cover; border:2px solid #0078d7; margin-right:5px;";
+                            badge.insertBefore(img, badge.firstChild);
+                        }
+                        if(img) img.src = emp.avatar_url;
+                    }
+                } catch(e) { console.warn("Не удалось загрузить аватарку хедера:", e); }
+                
+                await loadCloudData(); 
+            } catch(error) {
+                console.error("Критическая ошибка инициализации приложения:", error);
+            } finally {
+                closeLoadingOverlay();
+            }
 
             setInterval(checkTimeNotifications, 30000);
             
-            db.channel('realtime-sync')
-              .on('postgres_changes', { event: '*', schema: 'public', table: 'employees' }, () => {
-                  if (document.activeElement?.tagName !== 'INPUT') loadCloudData();
-              })
-              .on('postgres_changes', { event: '*', schema: 'public', table: 'global_metrics' }, () => {
-                  if (document.activeElement?.tagName !== 'INPUT') loadCloudData();
-              })
-              .subscribe();
+            try {
+                db.channel('realtime-sync')
+                  .on('postgres_changes', { event: '*', schema: 'public', table: 'employees' }, () => {
+                      if (document.activeElement?.tagName !== 'INPUT') loadCloudData();
+                  })
+                  .on('postgres_changes', { event: '*', schema: 'public', table: 'global_metrics' }, () => {
+                      if (document.activeElement?.tagName !== 'INPUT') loadCloudData();
+                  })
+                  .subscribe();
+            } catch(e) { console.warn("Ошибка подписки realtime:", e); }
         };
     </script>
 </body>
